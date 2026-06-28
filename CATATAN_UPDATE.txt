@@ -1,0 +1,23 @@
+UPDATE KOST AJ LANRAKI
+
+Cara pasang:
+1. Ekstrak ZIP ini.
+2. Copy folder app, database, resources, dan routes ke folder project utama.
+3. Pilih Replace / Overwrite jika diminta.
+4. Jalankan:
+   php artisan optimize:clear
+   php artisan migrate:fresh --seed
+   php artisan serve
+
+Akun test admin:
+Email    : admin@kostaj.com
+Password : admin123
+
+Isi update:
+- Tema gelap diperbaiki agar input, select, tabel, card, badge, dan teks lebih terbaca.
+- Landing page tidak lagi menampilkan pemasukan dan saldo.
+- Logout memakai route GET tambahan agar tidak mudah muncul Page Expired.
+- Pemasukan memiliki fitur pengingat WhatsApp untuk penghuni aktif yang belum membayar bulan berjalan.
+- Seeder diperbanyak menjadi 18 kamar, 15 penghuni, pemasukan bulan berjalan dan bulan sebelumnya, serta 10 pengeluaran.
+- Nomor telepon penghuni divalidasi hanya angka. Jika admin memasukkan huruf/simbol, sistem menampilkan alert dan validasi error.
+- File laporan tetap memakai cetak bersih. Browser tidak menyediakan API untuk mematikan checkbox Header and footer secara otomatis, jadi opsi itu tetap perlu dimatikan manual dari dialog print bila browser masih menampilkannya.

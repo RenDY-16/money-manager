@@ -19,6 +19,10 @@
             --surface-card: #ffffff;
             --surface-low: #f3f4f5;
             --surface-high: #e7e8e9;
+            --input-bg: #ffffff;
+            --input-text: #191c1d;
+            --input-placeholder: #9ca3af;
+            --row-hover: #eff6ff;
             --text-main: #191c1d;
             --text-muted: #444653;
             --border: #e5e7eb;
@@ -48,6 +52,10 @@
             --surface-card: #111827;
             --surface-low: #1f2937;
             --surface-high: #334155;
+            --input-bg: #0b1220;
+            --input-text: #f8fafc;
+            --input-placeholder: #94a3b8;
+            --row-hover: #172554;
             --text-main: #f8fafc;
             --text-muted: #cbd5e1;
             --border: #263244;
@@ -55,6 +63,9 @@
             --success-soft: #052e16;
             --danger-soft: #450a0a;
             --warning-soft: #451a03;
+            --success: #22c55e;
+            --danger: #f87171;
+            --warning: #fbbf24;
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
             --shadow-md: 0 14px 24px -12px rgba(0, 0, 0, 0.55);
         }
@@ -160,7 +171,7 @@
 
         .nav-label {
             padding: 14px 24px 8px;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
@@ -183,7 +194,7 @@
 
         .nav-link-sidebar:hover {
             background: var(--secondary-soft);
-            color: #001a42;
+            color: var(--primary);
         }
 
         .nav-link-sidebar.active {
@@ -199,7 +210,7 @@
         }
 
         .sidebar-footer small {
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 12px;
         }
 
@@ -253,7 +264,7 @@
 
         .topbar-title p {
             margin: 1px 0 0;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 500;
         }
@@ -269,7 +280,7 @@
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 20px;
         }
 
@@ -286,7 +297,7 @@
         }
 
         .topbar-search input:focus {
-            background: #fff;
+            background: var(--input-bg);
             border-color: var(--secondary);
             box-shadow: 0 0 0 3px rgba(0, 88, 190, .12);
         }
@@ -331,7 +342,7 @@
 
         .settings-panel p {
             margin: 0 0 14px;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 12px;
             line-height: 1.5;
         }
@@ -393,7 +404,7 @@
             height: 8px;
             background: var(--danger);
             border-radius: 999px;
-            border: 1px solid white;
+            border: 1px solid var(--surface-card);
         }
 
         .user-mini {
@@ -408,7 +419,7 @@
             width: 40px;
             height: 40px;
             border-radius: 999px;
-            background: var(--primary);
+            background: var(--primary-container);
             color: #fff;
             display: grid;
             place-items: center;
@@ -425,7 +436,7 @@
 
         .user-mini span {
             display: block;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 11px;
             font-weight: 500;
         }
@@ -551,7 +562,7 @@
 
         .metric-note {
             margin-top: 8px;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 500;
         }
@@ -596,7 +607,7 @@
 
         .table-modern thead th {
             background: var(--surface);
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
@@ -614,7 +625,7 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .table-modern tbody tr:hover { background: #eff6ff; }
+        .table-modern tbody tr:hover { background: var(--row-hover); }
         .table-modern tbody tr:last-child td { border-bottom: 0; }
 
         .table-title {
@@ -696,7 +707,7 @@
             padding: 10px 16px;
             border: 1px solid var(--border);
             border-radius: 4px;
-            background: #fff;
+            background: var(--surface-card);
             color: var(--primary);
             font-size: 13px;
             font-weight: 800;
@@ -753,8 +764,8 @@
             min-height: 40px;
             border: 1px solid var(--border);
             border-radius: 4px;
-            background: #fff;
-            color: var(--text-main);
+            background: var(--input-bg);
+            color: var(--input-text);
             font-size: 14px;
         }
 
@@ -804,7 +815,7 @@
 
         .empty-state p {
             margin: 0;
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 13px;
         }
 
@@ -816,9 +827,9 @@
         }
 
         .finance-panel.primary {
-            background: var(--primary);
+            background: var(--primary-container);
             color: #fff;
-            border-color: var(--primary);
+            border-color: var(--primary-container);
         }
 
         .finance-panel .label {
@@ -829,7 +840,7 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .04em;
-            color: #6b7280;
+            color: var(--text-muted);
         }
 
         .finance-panel.primary .label { color: #d8e2ff; }
@@ -875,7 +886,7 @@
         .chart-bar.expense { background: #f3b7bd; }
 
         .chart-label {
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 11px;
             font-weight: 700;
         }
@@ -895,7 +906,7 @@
             flex-wrap: wrap;
             padding: 14px 20px;
             border-bottom: 1px solid var(--border);
-            background: #fff;
+            background: var(--surface-card);
         }
 
         .compact-input {
@@ -905,7 +916,49 @@
             border: 1px solid var(--border);
             border-radius: 4px;
             padding: 8px 12px;
+            background: var(--input-bg);
+            color: var(--input-text);
             font-size: 13px;
+        }
+
+        .form-control::placeholder,
+        .compact-input::placeholder {
+            color: var(--input-placeholder);
+            opacity: 1;
+        }
+
+        .form-control:disabled,
+        .form-select:disabled,
+        .compact-input:disabled {
+            background: var(--surface-low);
+            color: var(--text-muted);
+            opacity: 1;
+        }
+
+        .form-select option,
+        .compact-input option {
+            background: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        body[data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+        body[data-theme="dark"] .text-success { color: #22c55e !important; }
+        body[data-theme="dark"] .text-danger { color: #f87171 !important; }
+
+        body[data-theme="dark"] .badge-tersedia,
+        body[data-theme="dark"] .badge-paid,
+        body[data-theme="dark"] .badge-success { color: #86efac; }
+        body[data-theme="dark"] .badge-terisi,
+        body[data-theme="dark"] .badge-danger { color: #fca5a5; }
+        body[data-theme="dark"] .badge-single,
+        body[data-theme="dark"] .badge-blue { color: #bfdbfe; }
+        body[data-theme="dark"] .badge-double,
+        body[data-theme="dark"] .badge-warning { color: #fde68a; }
+
+        .alert-danger-modern {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: var(--danger-soft);
         }
 
         .summary-strip {
@@ -1024,13 +1077,10 @@
 
     <div class="sidebar-footer">
         <small>&copy; {{ date('Y') }} Kost AJ Lanraki</small>
-        <form method="POST" action="{{ route('logout') }}" class="m-0">
-            @csrf
-            <button type="submit" class="logout-demo border-0">
-                <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
-                Logout
-            </button>
-        </form>
+        <a href="{{ route('logout.get') }}" class="logout-demo">
+            <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+            Logout
+        </a>
     </div>
 </aside>
 

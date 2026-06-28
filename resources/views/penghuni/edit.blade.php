@@ -10,7 +10,7 @@
     </h5>
 
     @if($errors->any())
-    <div class="alert-modern" style="background: #fff1f2; color: #9d174d; margin-bottom: 20px;">
+    <div class="alert-modern alert-danger-modern">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <div>
             @foreach($errors->all() as $error)
@@ -28,7 +28,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Nomor HP</label>
-            <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp', $penghuni->no_hp) }}" required>
+            <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp', $penghuni->no_hp) }}" inputmode="numeric" pattern="[0-9]+" required oninvalid="this.setCustomValidity('Nomor telepon hanya boleh berisi angka.')" oninput="this.setCustomValidity('')">
         </div>
         <div class="mb-3">
             <label class="form-label">Kamar</label>
@@ -57,3 +57,23 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        const phoneInput = document.querySelector('input[name="no_hp"]');
+
+        if (!form || !phoneInput) return;
+
+        form.addEventListener('submit', (event) => {
+            const phone = phoneInput.value.trim();
+            if (!/^[0-9]+$/.test(phone)) {
+                event.preventDefault();
+                alert('Nomor telepon hanya boleh berisi angka. Contoh: 081234567890');
+                phoneInput.focus();
+            }
+        });
+    });
+</script>
+@endpush

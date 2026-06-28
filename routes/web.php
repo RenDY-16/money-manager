@@ -16,6 +16,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
+// GET logout dipakai agar tidak muncul Page Expired saat sesi atau CSRF token bermasalah.
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

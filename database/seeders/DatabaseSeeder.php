@@ -8,6 +8,7 @@ use App\Models\Penghuni;
 use App\Models\Pemasukan;
 use App\Models\Pengeluaran;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,80 +17,98 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Seed User
         User::factory()->create([
             'name' => 'Admin Kost AJ',
             'email' => 'admin@kostaj.com',
             'password' => bcrypt('admin123'),
         ]);
 
-        // 2. Seed Kamar
-        $kamarA01 = Kamar::create(['nomor_kamar' => 'A01', 'tipe' => 'single', 'harga' => 600000, 'status' => 'terisi']);
-        $kamarA02 = Kamar::create(['nomor_kamar' => 'A02', 'tipe' => 'single', 'harga' => 600000, 'status' => 'tersedia']);
-        $kamarB01 = Kamar::create(['nomor_kamar' => 'B01', 'tipe' => 'double', 'harga' => 950000, 'status' => 'terisi']);
-        $kamarB02 = Kamar::create(['nomor_kamar' => 'B02', 'tipe' => 'double', 'harga' => 950000, 'status' => 'tersedia']);
-        $kamarC01 = Kamar::create(['nomor_kamar' => 'C01', 'tipe' => 'single', 'harga' => 500000, 'status' => 'terisi']);
+        $kamarData = [
+            ['A01', 'single', 600000], ['A02', 'single', 600000], ['A03', 'single', 650000],
+            ['A04', 'single', 650000], ['A05', 'single', 700000], ['A06', 'single', 700000],
+            ['B01', 'double', 900000], ['B02', 'double', 900000], ['B03', 'double', 950000],
+            ['B04', 'double', 950000], ['B05', 'double', 1000000], ['B06', 'double', 1000000],
+            ['C01', 'single', 550000], ['C02', 'single', 550000], ['C03', 'single', 600000],
+            ['C04', 'single', 600000], ['D01', 'double', 1100000], ['D02', 'double', 1100000],
+        ];
 
-        // 3. Seed Penghuni
-        $budi = Penghuni::create([
-            'nama' => 'Budi Santoso',
-            'no_hp' => '081234567890',
-            'kamar_id' => $kamarA01->id,
-            'tanggal_masuk' => '2026-01-10',
-        ]);
+        $kamars = collect($kamarData)->map(function ($row, $index) {
+            return Kamar::create([
+                'nomor_kamar' => $row[0],
+                'tipe' => $row[1],
+                'harga' => $row[2],
+                'status' => $index < 15 ? 'terisi' : 'tersedia',
+            ]);
+        });
 
-        $andi = Penghuni::create([
-            'nama' => 'Andi Wijaya',
-            'no_hp' => '085789012345',
-            'kamar_id' => $kamarB01->id,
-            'tanggal_masuk' => '2026-02-15',
-        ]);
+        $penghuniData = [
+            ['Budi Santoso', '081234567890', '2026-01-10'],
+            ['Andi Wijaya', '085789012345', '2026-01-15'],
+            ['Cici Lestari', '082134567812', '2026-02-01'],
+            ['Dewi Anggraini', '081345678901', '2026-02-08'],
+            ['Eko Prasetyo', '085612345678', '2026-02-20'],
+            ['Fajar Maulana', '087765432101', '2026-03-02'],
+            ['Gita Permata', '082245678912', '2026-03-11'],
+            ['Hendra Saputra', '081987654321', '2026-03-19'],
+            ['Intan Maharani', '085234567891', '2026-04-01'],
+            ['Joko Nugroho', '082112345678', '2026-04-09'],
+            ['Kartika Sari', '081278945612', '2026-04-17'],
+            ['Lukman Hakim', '085998877665', '2026-05-03'],
+            ['Maya Putri', '082311223344', '2026-05-10'],
+            ['Nanda Firmansyah', '081322334455', '2026-05-18'],
+            ['Rani Amelia', '085711223344', '2026-06-01'],
+        ];
 
-        $cici = Penghuni::create([
-            'nama' => 'Cici Lestari',
-            'no_hp' => '082134567812',
-            'kamar_id' => $kamarC01->id,
-            'tanggal_masuk' => '2026-03-01',
-        ]);
+        $penghunis = collect($penghuniData)->map(function ($row, $index) use ($kamars) {
+            return Penghuni::create([
+                'nama' => $row[0],
+                'no_hp' => $row[1],
+                'kamar_id' => $kamars[$index]->id,
+                'tanggal_masuk' => $row[2],
+            ]);
+        });
 
-        // 4. Seed Pemasukan
-        Pemasukan::create([
-            'penghuni_id' => $budi->id,
-            'jumlah' => 600000,
-            'tanggal' => '2026-06-01',
-            'keterangan' => 'Bayar kost bulan Juni 2026',
-        ]);
-        Pemasukan::create([
-            'penghuni_id' => $andi->id,
-            'jumlah' => 950000,
-            'tanggal' => '2026-06-02',
-            'keterangan' => 'Bayar kost bulan Juni 2026',
-        ]);
-        Pemasukan::create([
-            'penghuni_id' => $cici->id,
-            'jumlah' => 500000,
-            'tanggal' => '2026-06-05',
-            'keterangan' => 'Bayar kost bulan Juni 2026',
-        ]);
+        $bulanIni = Carbon::now()->startOfMonth();
+        $bulanLalu = Carbon::now()->subMonthNoOverflow()->startOfMonth();
 
-        // 5. Seed Pengeluaran
-        Pengeluaran::create([
-            'jumlah' => 150000,
-            'tanggal' => '2026-06-10',
-            'kategori' => 'Listrik',
-            'keterangan' => 'Pembelian token listrik utama',
-        ]);
-        Pengeluaran::create([
-            'jumlah' => 75000,
-            'tanggal' => '2026-06-12',
-            'kategori' => 'Air',
-            'keterangan' => 'Pembayaran tagihan air PDAM',
-        ]);
-        Pengeluaran::create([
-            'jumlah' => 120000,
-            'tanggal' => '2026-06-18',
-            'kategori' => 'Perbaikan',
-            'keterangan' => 'Servis AC Kamar B01',
-        ]);
+        foreach ($penghunis as $index => $penghuni) {
+            Pemasukan::create([
+                'penghuni_id' => $penghuni->id,
+                'jumlah' => optional($penghuni->kamar)->harga ?? 0,
+                'tanggal' => $bulanLalu->copy()->addDays(($index % 25) + 1)->toDateString(),
+                'keterangan' => 'Bayar kost bulan ' . $bulanLalu->locale('id')->translatedFormat('F Y'),
+            ]);
+        }
+
+        foreach ($penghunis->take(9) as $index => $penghuni) {
+            Pemasukan::create([
+                'penghuni_id' => $penghuni->id,
+                'jumlah' => optional($penghuni->kamar)->harga ?? 0,
+                'tanggal' => $bulanIni->copy()->addDays($index + 1)->toDateString(),
+                'keterangan' => 'Bayar kost bulan ' . $bulanIni->locale('id')->translatedFormat('F Y'),
+            ]);
+        }
+
+        $pengeluaranData = [
+            [150000, 'Listrik', 'Pembelian token listrik utama', 3],
+            [85000, 'Air', 'Pembayaran tagihan air PDAM', 5],
+            [125000, 'Kebersihan', 'Pembelian alat kebersihan', 6],
+            [250000, 'Perbaikan', 'Perbaikan kran kamar mandi', 8],
+            [300000, 'Internet', 'Pembayaran internet bulanan', 10],
+            [175000, 'Lainnya', 'Pembelian lampu cadangan', 12],
+            [425000, 'Perbaikan', 'Servis AC kamar B03', 14],
+            [95000, 'Kebersihan', 'Biaya angkut sampah', 16],
+            [225000, 'Listrik', 'Tambahan token area luar', 18],
+            [110000, 'Air', 'Perawatan pompa air', 20],
+        ];
+
+        foreach ($pengeluaranData as $row) {
+            Pengeluaran::create([
+                'jumlah' => $row[0],
+                'tanggal' => $bulanIni->copy()->addDays($row[3])->toDateString(),
+                'kategori' => $row[1],
+                'keterangan' => $row[2],
+            ]);
+        }
     }
 }

@@ -208,19 +208,19 @@
             <div class="mini-stat-grid">
                 <div class="mini-stat">
                     <div class="label">Kamar</div>
-                    <div class="value">5</div>
+                    <div class="value">18</div>
                 </div>
                 <div class="mini-stat">
                     <div class="label">Penghuni</div>
-                    <div class="value">3</div>
+                    <div class="value">15</div>
                 </div>
                 <div class="mini-stat">
-                    <div class="label">Pemasukan</div>
-                    <div class="value">Rp 2,05 jt</div>
+                    <div class="label">Status Kamar</div>
+                    <div class="value">Aktif</div>
                 </div>
                 <div class="mini-stat">
-                    <div class="label">Saldo</div>
-                    <div class="value">Rp 1,70 jt</div>
+                    <div class="label">Laporan</div>
+                    <div class="value">Siap</div>
                 </div>
             </div>
         </div>

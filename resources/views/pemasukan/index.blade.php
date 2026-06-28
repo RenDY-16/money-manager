@@ -30,6 +30,72 @@
     </div>
 </div>
 
+<div class="content-card mb-4">
+    <div class="content-card-header">
+        <h5><span class="material-symbols-outlined">mark_chat_unread</span> Pengingat WhatsApp Belum Bayar</h5>
+        <span class="badge-status badge-warning">{{ $periodeTagihan }}</span>
+    </div>
+    <div class="content-card-body flush">
+        @if($penghuniBelumBayar->count() > 0)
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Penghuni</th>
+                            <th>No. WhatsApp</th>
+                            <th>Kamar</th>
+                            <th class="text-end">Tagihan</th>
+                            <th>Template Pesan</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($penghuniBelumBayar as $penghuni)
+                            <tr>
+                                <td>
+                                    <div class="table-title">
+                                        <span class="row-avatar">{{ strtoupper(substr($penghuni->nama, 0, 2)) }}</span>
+                                        {{ $penghuni->nama }}
+                                    </div>
+                                </td>
+                                <td>{{ $penghuni->no_hp }}</td>
+                                <td>
+                                    @if($penghuni->kamar)
+                                        <span class="badge-status badge-blue">Kamar {{ $penghuni->kamar->nomor_kamar }}</span>
+                                    @else
+                                        <span class="badge-status badge-neutral">Kamar Terhapus</span>
+                                    @endif
+                                </td>
+                                <td class="text-end fw-bold">Rp {{ number_format(optional($penghuni->kamar)->harga ?? 0, 0, ',', '.') }}</td>
+                                <td style="min-width:260px; max-width:360px;">
+                                    <div class="small text-muted">{{ $penghuni->wa_message }}</div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons justify-content-end">
+                                        @if($penghuni->wa_link)
+                                            <a href="{{ $penghuni->wa_link }}" target="_blank" class="btn-primary-custom" style="min-height:34px;padding:8px 12px;">
+                                                <i class="bi bi-whatsapp"></i> Chat
+                                            </a>
+                                        @else
+                                            <span class="badge-status badge-danger">Nomor tidak valid</span>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="empty-state py-4">
+                <span class="material-symbols-outlined">check_circle</span>
+                <h6>Semua penghuni aktif sudah membayar</h6>
+                <p>Tidak ada pengingat WhatsApp untuk periode {{ $periodeTagihan }}.</p>
+            </div>
+        @endif
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-xl-4">
         <div class="content-card">
@@ -38,7 +104,7 @@
             </div>
             <div class="content-card-body">
                 @if($errors->any())
-                    <div class="alert-modern" style="background: var(--danger-soft); color: #991b1b; border-color: #fecaca;">
+                    <div class="alert-modern alert-danger-modern">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>
                             @foreach($errors->all() as $error)
