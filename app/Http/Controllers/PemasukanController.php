@@ -4,18 +4,40 @@ namespace App\Http\Controllers;
 use App\Models\Pemasukan;
 use App\Models\Penghuni;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class PemasukanController extends Controller {
-    public function index(){
-        $pemasukans = Pemasukan::with('penghuni.kamar')->latest()->get();
-        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
+    public function index(Request $request){
+        $query = Pemasukan::with('penghuni.kamar');
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('keterangan', 'like', '%' . $search . '%')
+                    ->orWhereHas('penghuni', fn ($tenant) => $tenant->where('nama', 'like', '%' . $search . '%'));
+            });
+        }
+
+        if ($request->filled('kategori') && in_array($request->kategori, ['pembayaran_kost', 'pemasukan_lainnya'], true)) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        if ($request->filled('tanggal_mulai')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_selesai);
+        }
+
+        $pemasukans = $query->orderByDesc('tanggal')->orderByDesc('id')->get();
+        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
         $totalPemasukan = (float) Pemasukan::sum('jumlah');
-        $pemasukanBulanIni = (float) Pemasukan::all()
-            ->filter(fn ($item) => Carbon::parse($item->tanggal)->isSameMonth(Carbon::now()))
-            ->sum('jumlah');
+        $pemasukanBulanIni = (float) Pemasukan::whereBetween('tanggal', [
+            Carbon::now()->startOfMonth()->toDateString(),
+            Carbon::now()->endOfMonth()->toDateString(),
+        ])->sum('jumlah');
 
         $periodeTagihan = Carbon::now()->locale('id')->translatedFormat('F Y');
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
@@ -30,6 +52,7 @@ class PemasukanController extends Controller {
         $penghuniBelumBayar = Penghuni::whereNull('tanggal_keluar')
             ->whereNotIn('id', $penghuniSudahBayarIds)
             ->with('kamar')
+            ->orderBy('nama')
             ->get()
             ->map(function ($penghuni) use ($periodeTagihan) {
                 $nomorKamar = optional($penghuni->kamar)->nomor_kamar ?: '-';
@@ -45,14 +68,18 @@ class PemasukanController extends Controller {
                 return $penghuni;
             });
 
+        $jumlahPenghuniAktif = Penghuni::whereNull('tanggal_keluar')->count();
+        $jumlahLunas = count($penghuniSudahBayarIds);
+        $jumlahBelumLunas = $penghuniBelumBayar->count();
+
         return view('pemasukan.index', compact(
             'pemasukans', 'penghunis', 'kategoriPemasukan', 'totalPemasukan', 'pemasukanBulanIni',
-            'penghuniBelumBayar', 'periodeTagihan'
+            'penghuniBelumBayar', 'periodeTagihan', 'jumlahPenghuniAktif', 'jumlahLunas', 'jumlahBelumLunas'
         ));
     }
 
     public function create(){
-        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
+        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
         return view('pemasukan.create', compact('penghunis', 'kategoriPemasukan'));
     }
@@ -64,7 +91,7 @@ class PemasukanController extends Controller {
     }
 
     public function edit(Pemasukan $pemasukan){
-        $penghunis = Penghuni::with('kamar')->get();
+        $penghunis = Penghuni::with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
         return view('pemasukan.edit', compact('pemasukan', 'penghunis', 'kategoriPemasukan'));
     }

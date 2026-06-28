@@ -44,30 +44,30 @@
         }
 
         body[data-theme="dark"] {
-            --primary: #c7d2fe;
+            --primary: #ffffff;
             --primary-container: #2563eb;
-            --secondary: #60a5fa;
-            --secondary-soft: #172554;
-            --surface: #0f172a;
-            --surface-card: #111827;
-            --surface-low: #1f2937;
-            --surface-high: #334155;
-            --input-bg: #0b1220;
-            --input-text: #f8fafc;
-            --input-placeholder: #94a3b8;
-            --row-hover: #172554;
-            --text-main: #f8fafc;
-            --text-muted: #cbd5e1;
-            --border: #263244;
-            --border-strong: #334155;
+            --secondary: #ffffff;
+            --secondary-soft: #111111;
+            --surface: #000000;
+            --surface-card: #070707;
+            --surface-low: #111111;
+            --surface-high: #1c1c1c;
+            --input-bg: #000000;
+            --input-text: #ffffff;
+            --input-placeholder: #d1d5db;
+            --row-hover: #141414;
+            --text-main: #ffffff;
+            --text-muted: #ffffff;
+            --border: #2b2b2b;
+            --border-strong: #3a3a3a;
             --success-soft: #052e16;
             --danger-soft: #450a0a;
             --warning-soft: #451a03;
             --success: #22c55e;
             --danger: #f87171;
             --warning: #fbbf24;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-            --shadow-md: 0 14px 24px -12px rgba(0, 0, 0, 0.55);
+            --shadow-sm: none;
+            --shadow-md: 0 14px 24px -12px rgba(255, 255, 255, 0.12);
         }
 
         body[data-theme="green"] {
@@ -425,6 +425,15 @@
             place-items: center;
             font-weight: 800;
             box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .avatar img,
+        .profile-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .user-mini strong {
@@ -627,6 +636,17 @@
 
         .table-modern tbody tr:hover { background: var(--row-hover); }
         .table-modern tbody tr:last-child td { border-bottom: 0; }
+        .table-modern .text-end { white-space: nowrap; }
+        .table-modern .cell-muted { color: var(--text-muted); font-size: 12px; font-weight: 600; }
+
+        .table-scroll {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .table-scroll .table-modern {
+            min-width: 860px;
+        }
 
         .table-title {
             display: flex;
@@ -954,6 +974,12 @@
         body[data-theme="dark"] .badge-blue { color: #bfdbfe; }
         body[data-theme="dark"] .badge-double,
         body[data-theme="dark"] .badge-warning { color: #fde68a; }
+        body[data-theme="dark"] .btn-secondary-custom,
+        body[data-theme="dark"] .btn-cancel { background: #000; color: #fff; border-color: #fff; }
+        body[data-theme="dark"] .settings-panel,
+        body[data-theme="dark"] .form-select option { background: #000; color: #fff; }
+        body[data-theme="dark"] .finance-panel.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+        body[data-theme="dark"] .table-modern thead th { background: #000; color: #fff; }
 
         .alert-danger-modern {
             background: var(--danger-soft);
@@ -1069,6 +1095,10 @@
             <span class="material-symbols-outlined">description</span>
             <span>Laporan Keuangan</span>
         </a>
+        <a href="{{ route('backup.index') }}" class="nav-link-sidebar {{ request()->is('backup-data*') ? 'active' : '' }}">
+            <span class="material-symbols-outlined">backup</span>
+            <span>Backup Data</span>
+        </a>
         <a href="{{ route('profil.index') }}" class="nav-link-sidebar {{ request()->is('profil-admin*') ? 'active' : '' }}" style="margin-top:auto;">
             <span class="material-symbols-outlined">person</span>
             <span>Profil Admin</span>
@@ -1117,7 +1147,13 @@
                 </div>
             </div>
             <div class="user-mini">
-                <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'AJ', 0, 2)) }}</div>
+                <div class="avatar">
+                    @if(auth()->user()?->profile_photo)
+                        <img src="{{ asset(auth()->user()->profile_photo) }}" alt="Foto admin">
+                    @else
+                        {{ strtoupper(substr(auth()->user()->name ?? 'AJ', 0, 2)) }}
+                    @endif
+                </div>
                 <div>
                     <strong>{{ auth()->user()->name ?? 'Admin' }}</strong>
                     <span>Owner</span>
@@ -1131,6 +1167,17 @@
             <div class="alert-modern alert-success-modern">
                 <i class="bi bi-check-circle-fill"></i>
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert-modern alert-danger-modern">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    @foreach($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
             </div>
         @endif
 

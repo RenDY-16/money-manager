@@ -4,9 +4,26 @@ use App\Models\Kamar;
 use Illuminate\Http\Request;
 
 class KamarController extends Controller {
-    public function index(){
-        $kamars = Kamar::latest()->get();
-        return view('kamar.index', compact('kamars'));
+    public function index(Request $request){
+        $query = Kamar::query();
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where('nomor_kamar', 'like', '%' . $search . '%');
+        }
+
+        if ($request->filled('status') && in_array($request->status, ['tersedia', 'terisi'], true)) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('tipe') && in_array($request->tipe, ['single', 'double'], true)) {
+            $query->where('tipe', $request->tipe);
+        }
+
+        $kamars = $query->orderBy('nomor_kamar')->get();
+        $allKamars = Kamar::all();
+
+        return view('kamar.index', compact('kamars', 'allKamars'));
     }
 
     public function create(){

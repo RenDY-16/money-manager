@@ -6,12 +6,35 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class PengeluaranController extends Controller {
-    public function index(){
-        $pengeluarans = Pengeluaran::latest()->get();
+    public function index(Request $request){
+        $query = Pengeluaran::query();
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        if ($request->filled('tanggal_mulai')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_selesai);
+        }
+
+        $pengeluarans = $query->orderByDesc('tanggal')->orderByDesc('id')->get();
         $totalPengeluaran = (float) Pengeluaran::sum('jumlah');
-        $pengeluaranBulanIni = (float) Pengeluaran::all()
-            ->filter(fn ($item) => Carbon::parse($item->tanggal)->isSameMonth(Carbon::now()))
-            ->sum('jumlah');
+        $pengeluaranBulanIni = (float) Pengeluaran::whereBetween('tanggal', [
+            Carbon::now()->startOfMonth()->toDateString(),
+            Carbon::now()->endOfMonth()->toDateString(),
+        ])->sum('jumlah');
         $kategoriList = $this->kategoriList();
         return view('pengeluaran.index', compact('pengeluarans', 'totalPengeluaran', 'pengeluaranBulanIni', 'kategoriList'));
     }

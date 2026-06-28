@@ -1,30 +1,28 @@
-UPDATE KOST AJ LANRAKI
+UPDATE 3 - Kost AJ Lanraki
 
-Isi perubahan:
-1. Tombol Form Halaman Penuh di menu Pemasukan dan Pengeluaran dihapus.
-2. Menu Pemasukan ditambah kategori:
-   - Pembayaran Kost
-   - Pemasukan Lainnya
-3. Saat kategori Pembayaran Kost dipilih, jumlah pembayaran otomatis mengikuti harga kamar penghuni yang dipilih.
-4. Kategori Pemasukan Lainnya tidak wajib memilih penghuni.
-5. Menu Pengeluaran ditambah tombol + Tambah kategori agar admin dapat membuat kategori pengeluaran sendiri.
-6. Kategori pengeluaran custom tersimpan melalui data transaksi dan akan muncul lagi di daftar kategori.
-7. Filter tahun laporan dibuat mendukung tahun berjalan sampai 10 tahun ke depan.
-8. Laporan keuangan menampilkan semua data pemasukan dan pengeluaran sesuai filter, bukan hanya 5 data terbaru.
-9. Cetak laporan akan mencetak seluruh data yang sedang tampil di laporan.
-10. Seeder tetap berisi 18 kamar dan 15 penghuni, ditambah data pemasukan lainnya.
+Fitur baru dan perbaikan:
+1. Status pembayaran lunas/belum lunas bulan berjalan.
+2. Tombol Terapkan Filter pada menu Data Kamar, Data Penghuni, Pemasukan, Pengeluaran, dan Laporan Keuangan.
+3. Profile Admin sekarang bisa mengubah nama, email, password, dan foto profil.
+4. Distribusi pengeluaran ikut tampil saat cetak laporan karena ditambahkan tabel distribusi selain grafik.
+5. Saldo bersih laporan tidak lagi menjadi negatif hanya karena filter jenis pengeluaran dipilih. Ringkasan saldo memakai total pemasukan dan pengeluaran pada periode yang sama.
+6. Tampilan data tabel dibuat lebih mudah dibaca dengan table-scroll, badge status, dan detail kamar/tagihan.
+7. Tema gelap memakai warna hitam solid dan warna sekunder putih bersih.
+8. Menu Backup Data ditambahkan di sidebar.
+9. Backup data dapat diunduh dalam format JSON.
+10. Tombol Export Excel ditambahkan pada Laporan Keuangan.
 
 Cara pasang:
-- Ekstrak ZIP ini.
-- Copy folder app, database, dan resources ke project utama.
-- Pilih Replace atau Overwrite.
-- Jalankan:
-  php artisan optimize:clear
-  php artisan migrate:fresh --seed
-  php artisan serve
+1. Ekstrak ZIP.
+2. Copy folder app, database, resources, routes, dan file .gitignore ke project utama.
+3. Pilih Replace/Overwrite.
+4. Jalankan:
+   php artisan optimize:clear
+   php artisan migrate
+   php artisan serve
 
-Catatan penting:
-- Karena struktur tabel pemasukan berubah, migrate:fresh --seed perlu dijalankan agar kolom kategori dan penghuni_id nullable terbentuk.
-- Akun admin test tetap:
-  Email    : admin@kostaj.com
-  Password : admin123
+Catatan:
+- Tidak perlu migrate:fresh. Cukup php artisan migrate karena hanya menambah kolom profile_photo pada tabel users.
+- ZIP ini tidak membawa database.sqlite agar data lokal/Railway tidak tertimpa.
+- Jika di Railway, jalankan migrate melalui Railway pre-deploy command atau terminal Railway.
+- Export Excel memakai format .xls berbasis tabel HTML agar tidak perlu package tambahan.

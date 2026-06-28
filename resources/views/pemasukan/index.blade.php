@@ -7,11 +7,11 @@
 <div class="page-heading">
     <div>
         <h1>Manajemen Pemasukan</h1>
-        <p>Catat pembayaran penghuni, pemasukan lain, dan pantau uang masuk.</p>
+        <p>Catat pembayaran penghuni, pemasukan lain, dan pantau status lunas bulan berjalan.</p>
     </div>
 </div>
 
-<div class="summary-strip mb-4">
+<div class="metric-grid metric-grid-5 mb-4">
     <div class="finance-panel primary">
         <div class="label"><span class="material-symbols-outlined">payments</span> Total Pemasukan</div>
         <div class="value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
@@ -22,7 +22,15 @@
     </div>
     <div class="finance-panel">
         <div class="label"><span class="material-symbols-outlined">group</span> Penghuni Aktif</div>
-        <div class="value">{{ $penghunis->count() }} Orang</div>
+        <div class="value">{{ $jumlahPenghuniAktif }} Orang</div>
+    </div>
+    <div class="finance-panel">
+        <div class="label"><span class="material-symbols-outlined">check_circle</span> Lunas</div>
+        <div class="value text-success">{{ $jumlahLunas }} Orang</div>
+    </div>
+    <div class="finance-panel">
+        <div class="label"><span class="material-symbols-outlined">pending_actions</span> Belum Lunas</div>
+        <div class="value text-danger">{{ $jumlahBelumLunas }} Orang</div>
     </div>
 </div>
 
@@ -33,7 +41,7 @@
     </div>
     <div class="content-card-body flush">
         @if($penghuniBelumBayar->count() > 0)
-            <div class="table-responsive">
+            <div class="table-scroll">
                 <table class="table-modern">
                     <thead>
                         <tr>
@@ -41,6 +49,7 @@
                             <th>No. WhatsApp</th>
                             <th>Kamar</th>
                             <th class="text-end">Tagihan</th>
+                            <th>Status</th>
                             <th>Template Pesan</th>
                             <th class="text-end">Aksi</th>
                         </tr>
@@ -63,6 +72,7 @@
                                     @endif
                                 </td>
                                 <td class="text-end fw-bold">Rp {{ number_format(optional($penghuni->kamar)->harga ?? 0, 0, ',', '.') }}</td>
+                                <td><span class="badge-status badge-warning">Belum Lunas</span></td>
                                 <td style="min-width:260px; max-width:360px;">
                                     <div class="small text-muted">{{ $penghuni->wa_message }}</div>
                                 </td>
@@ -99,17 +109,6 @@
                 <h5><span class="material-symbols-outlined">add_card</span> Catat Pemasukan</h5>
             </div>
             <div class="content-card-body">
-                @if($errors->any())
-                    <div class="alert-modern alert-danger-modern">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <div>
-                            @foreach($errors->all() as $error)
-                                <div>{{ $error }}</div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
                 <form action="{{ route('pemasukan.store') }}" method="POST" id="pemasukanForm">
                     @csrf
                     <div class="mb-3">
@@ -162,9 +161,25 @@
                 <h5><span class="material-symbols-outlined">receipt_long</span> Riwayat Pemasukan</h5>
                 <span class="badge-status badge-blue">{{ $pemasukans->count() }} transaksi</span>
             </div>
+            <form method="GET" action="{{ route('pemasukan.index') }}" class="filter-box">
+                <input class="compact-input" type="search" name="search" value="{{ request('search') }}" placeholder="Cari penghuni/keterangan...">
+                <select name="kategori" class="compact-input">
+                    <option value="">Semua Kategori</option>
+                    @foreach($kategoriPemasukan as $value => $label)
+                        <option value="{{ $value }}" {{ request('kategori') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <input class="compact-input" type="date" name="tanggal_mulai" value="{{ request('tanggal_mulai') }}" title="Tanggal mulai">
+                <input class="compact-input" type="date" name="tanggal_selesai" value="{{ request('tanggal_selesai') }}" title="Tanggal selesai">
+                <button type="submit" class="btn-primary-custom">
+                    <span class="material-symbols-outlined" style="font-size:18px;">filter_alt</span>
+                    Terapkan Filter
+                </button>
+                <a href="{{ route('pemasukan.index') }}" class="btn-secondary-custom">Reset</a>
+            </form>
             <div class="content-card-body flush">
                 @if($pemasukans->count() > 0)
-                    <div class="table-responsive">
+                    <div class="table-scroll">
                         <table class="table-modern">
                             <thead>
                                 <tr>
@@ -189,12 +204,17 @@
                                     <td>
                                         <div class="table-title">
                                             <span class="row-avatar">{{ strtoupper(substr(optional($pemasukan->penghuni)->nama ?? 'PL', 0, 2)) }}</span>
-                                            {{ optional($pemasukan->penghuni)->nama ?? 'Pemasukan lainnya' }}
+                                            <div>
+                                                {{ optional($pemasukan->penghuni)->nama ?? 'Pemasukan lainnya' }}
+                                                @if(optional($pemasukan->penghuni)->kamar)
+                                                    <div class="cell-muted">Kamar {{ $pemasukan->penghuni->kamar->nomor_kamar }}</div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="text-end fw-bold text-success">Rp {{ number_format($pemasukan->jumlah, 0, ',', '.') }}</td>
                                     <td>{{ $pemasukan->keterangan ?: '-' }}</td>
-                                    <td><span class="badge-status badge-success">Berhasil</span></td>
+                                    <td><span class="badge-status badge-success">Lunas/Tercatat</span></td>
                                     <td>
                                         <div class="action-buttons justify-content-end">
                                             <a href="{{ route('pemasukan.edit', $pemasukan) }}" class="btn-action btn-edit" title="Edit">
@@ -216,8 +236,8 @@
                 @else
                     <div class="empty-state">
                         <span class="material-symbols-outlined">payments</span>
-                        <h6>Belum ada pemasukan</h6>
-                        <p>Gunakan form di sebelah kiri untuk mencatat pemasukan pertama.</p>
+                        <h6>Data tidak ditemukan</h6>
+                        <p>Ubah filter atau catat pemasukan baru.</p>
                     </div>
                 @endif
             </div>

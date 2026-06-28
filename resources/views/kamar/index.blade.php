@@ -5,10 +5,11 @@
 
 @section('content')
 @php
-    $total = $kamars->count();
-    $tersedia = $kamars->where('status', 'tersedia')->count();
-    $terisi = $kamars->where('status', 'terisi')->count();
-    $potensi = $kamars->sum('harga');
+    $statSource = $allKamars ?? $kamars;
+    $total = $statSource->count();
+    $tersedia = $statSource->where('status', 'tersedia')->count();
+    $terisi = $statSource->where('status', 'terisi')->count();
+    $potensi = $statSource->sum('harga');
 @endphp
 
 <div class="page-heading">
@@ -50,23 +51,28 @@
 </div>
 
 <div class="content-card">
-    <div class="filter-box">
-        <input class="compact-input" type="search" placeholder="Cari nomor kamar...">
-        <select class="compact-input">
-            <option>Semua Status</option>
-            <option>Tersedia</option>
-            <option>Terisi</option>
+    <form method="GET" action="{{ route('kamar.index') }}" class="filter-box">
+        <input class="compact-input" name="search" type="search" value="{{ request('search') }}" placeholder="Cari nomor kamar...">
+        <select class="compact-input" name="status">
+            <option value="">Semua Status</option>
+            <option value="tersedia" {{ request('status') === 'tersedia' ? 'selected' : '' }}>Tersedia</option>
+            <option value="terisi" {{ request('status') === 'terisi' ? 'selected' : '' }}>Terisi</option>
         </select>
-        <select class="compact-input">
-            <option>Semua Tipe</option>
-            <option>Single</option>
-            <option>Double</option>
+        <select class="compact-input" name="tipe">
+            <option value="">Semua Tipe</option>
+            <option value="single" {{ request('tipe') === 'single' ? 'selected' : '' }}>Single</option>
+            <option value="double" {{ request('tipe') === 'double' ? 'selected' : '' }}>Double</option>
         </select>
+        <button type="submit" class="btn-primary-custom">
+            <span class="material-symbols-outlined" style="font-size:18px;">filter_alt</span>
+            Terapkan Filter
+        </button>
+        <a href="{{ route('kamar.index') }}" class="btn-secondary-custom">Reset</a>
         <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $kamars->count() }} data kamar</span>
-    </div>
+    </form>
     <div class="content-card-body flush">
         @if($kamars->count() > 0)
-        <div class="table-responsive">
+        <div class="table-scroll">
             <table class="table-modern">
                 <thead>
                     <tr>
@@ -120,8 +126,8 @@
         @else
         <div class="empty-state">
             <span class="material-symbols-outlined">bed</span>
-            <h6>Belum ada data kamar</h6>
-            <p>Klik tombol tambah kamar untuk membuat data pertama.</p>
+            <h6>Data tidak ditemukan</h6>
+            <p>Ubah filter atau tambah data kamar baru.</p>
         </div>
         @endif
     </div>

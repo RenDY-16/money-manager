@@ -19,6 +19,15 @@ class DashboardController extends Controller {
         $kamarTersedia = Kamar::where('status', 'tersedia')->count();
         $kamarTerisi = Kamar::where('status', 'terisi')->count();
         $okupansi = $totalKamar > 0 ? round(($kamarTerisi / $totalKamar) * 100) : 0;
+        $awalBulan = Carbon::now()->startOfMonth()->toDateString();
+        $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
+        $penghuniLunasIds = Pemasukan::where('kategori', 'pembayaran_kost')
+            ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
+            ->whereNotNull('penghuni_id')
+            ->pluck('penghuni_id')
+            ->unique();
+        $penghuniLunas = $penghuniLunasIds->count();
+        $penghuniBelumLunas = max(0, $totalPenghuni - $penghuniLunas);
 
         $monthNames = [
             1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
@@ -79,7 +88,7 @@ class DashboardController extends Controller {
         return view('dashboard.index', compact(
             'totalKamar', 'totalPenghuni', 'totalPemasukan', 'totalPengeluaran',
             'saldoBersih', 'kamarTersedia', 'kamarTerisi', 'okupansi',
-            'chartLabels', 'chartPemasukan', 'chartPengeluaran', 'latestTransaksi', 'year'
+            'chartLabels', 'chartPemasukan', 'chartPengeluaran', 'latestTransaksi', 'year', 'penghuniLunas', 'penghuniBelumLunas'
         ));
     }
 }

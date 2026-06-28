@@ -12,6 +12,23 @@ class LaporanController extends Controller
 {
     public function index(Request $request)
     {
+        return view('laporan.index', $this->buildReportData($request));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data = $this->buildReportData($request);
+        $filename = 'laporan-keuangan-kost-aj-' . now()->format('Ymd-His') . '.xls';
+
+        return response()
+            ->view('laporan.export_excel', $data)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    private function buildReportData(Request $request): array
+    {
         $months = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -46,16 +63,17 @@ class LaporanController extends Controller
         $allPengeluaran = Pengeluaran::whereYear('tanggal', $selectedYear)
             ->get();
 
-        $filteredPemasukan = $this->filterByMonth($allPemasukan, $selectedMonth);
-        $filteredPengeluaran = $this->filterByMonth($allPengeluaran, $selectedMonth);
+        $periodPemasukan = $this->filterByMonth($allPemasukan, $selectedMonth);
+        $periodPengeluaran = $this->filterByMonth($allPengeluaran, $selectedMonth);
 
-        if ($selectedType === 'pengeluaran') {
-            $filteredPemasukan = collect();
-        }
+        // Ringkasan keuangan tetap memakai pemasukan dan pengeluaran periode yang sama.
+        // Filter jenis hanya mengatur daftar transaksi yang ditampilkan, sehingga saldo tidak berubah negatif hanya karena admin memilih jenis pengeluaran.
+        $totalPemasukan = (float) $periodPemasukan->sum('jumlah');
+        $totalPengeluaran = (float) $periodPengeluaran->sum('jumlah');
+        $saldoBersih = $totalPemasukan - $totalPengeluaran;
 
-        if ($selectedType === 'pemasukan') {
-            $filteredPengeluaran = collect();
-        }
+        $filteredPemasukan = $selectedType === 'pengeluaran' ? collect() : $periodPemasukan;
+        $filteredPengeluaran = $selectedType === 'pemasukan' ? collect() : $periodPengeluaran;
 
         $chartMonths = $selectedMonth === 'semua' ? array_keys($months) : [$selectedMonth];
         $chartLabels = [];
@@ -64,28 +82,21 @@ class LaporanController extends Controller
 
         foreach ($chartMonths as $monthNumber) {
             $chartLabels[] = $months[$monthNumber];
-            $chartPemasukan[] = $selectedType === 'pengeluaran'
-                ? 0
-                : (float) $allPemasukan
-                    ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
-                    ->sum('jumlah');
-            $chartPengeluaran[] = $selectedType === 'pemasukan'
-                ? 0
-                : (float) $allPengeluaran
-                    ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
-                    ->sum('jumlah');
+            $chartPemasukan[] = (float) $allPemasukan
+                ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
+                ->sum('jumlah');
+            $chartPengeluaran[] = (float) $allPengeluaran
+                ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
+                ->sum('jumlah');
         }
 
-        $totalPemasukan = (float) $filteredPemasukan->sum('jumlah');
-        $totalPengeluaran = (float) $filteredPengeluaran->sum('jumlah');
-        $saldoBersih = $totalPemasukan - $totalPengeluaran;
-
-        $pengeluaranKategori = $filteredPengeluaran
+        $pengeluaranKategori = $periodPengeluaran
             ->groupBy('kategori')
             ->map(function ($rows, $kategori) {
                 return [
                     'kategori' => $kategori ?: 'Lainnya',
                     'total' => (float) $rows->sum('jumlah'),
+                    'jumlah_transaksi' => $rows->count(),
                 ];
             })
             ->sortByDesc('total')
@@ -103,13 +114,15 @@ class LaporanController extends Controller
             ->values();
 
         $filterLabel = $this->filterLabel($months, $selectedMonth, $selectedYear, $selectedType);
+        $periodeLabel = $this->periodeLabel($months, $selectedMonth, $selectedYear);
 
-        return view('laporan.index', compact(
+        return compact(
             'chartLabels', 'chartPemasukan', 'chartPengeluaran',
             'totalPemasukan', 'totalPengeluaran', 'saldoBersih',
-            'chartKategoriLabels', 'chartKategoriTotals', 'latestPemasukan', 'latestPengeluaran',
-            'months', 'availableYears', 'selectedYear', 'selectedMonth', 'selectedType', 'filterLabel'
-        ));
+            'chartKategoriLabels', 'chartKategoriTotals', 'pengeluaranKategori',
+            'latestPemasukan', 'latestPengeluaran',
+            'months', 'availableYears', 'selectedYear', 'selectedMonth', 'selectedType', 'filterLabel', 'periodeLabel'
+        );
     }
 
     private function filterByMonth(Collection $rows, int|string $selectedMonth): Collection
@@ -126,7 +139,7 @@ class LaporanController extends Controller
     private function availableYears(): array
     {
         $currentYear = Carbon::now()->year;
-        $yearRange = range($currentYear - 1, $currentYear + 10);
+        $yearRange = range($currentYear - 3, $currentYear + 10);
 
         $years = collect($yearRange)
             ->merge(Pemasukan::pluck('tanggal')->map(fn ($date) => Carbon::parse($date)->year))
@@ -151,5 +164,10 @@ class LaporanController extends Controller
         };
 
         return $typeText . ' | ' . $monthText . ' ' . $selectedYear;
+    }
+
+    private function periodeLabel(array $months, int|string $selectedMonth, int $selectedYear): string
+    {
+        return ($selectedMonth === 'semua' ? 'Semua bulan' : $months[$selectedMonth]) . ' ' . $selectedYear;
     }
 }

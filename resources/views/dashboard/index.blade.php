@@ -104,6 +104,14 @@
                     <div class="label"><span class="material-symbols-outlined">groups</span> Penghuni Aktif</div>
                     <div class="value">{{ $totalPenghuni }} Orang</div>
                 </div>
+                <div class="finance-panel mb-3">
+                    <div class="label"><span class="material-symbols-outlined">check_circle</span> Lunas Bulan Ini</div>
+                    <div class="value text-success">{{ $penghuniLunas }} Orang</div>
+                </div>
+                <div class="finance-panel mb-3">
+                    <div class="label"><span class="material-symbols-outlined">pending_actions</span> Belum Lunas</div>
+                    <div class="value text-danger">{{ $penghuniBelumLunas }} Orang</div>
+                </div>
                 <a href="{{ route('pemasukan.index') }}" class="btn-primary-custom w-100 mb-2">
                     <span class="material-symbols-outlined" style="font-size:18px;">add</span>
                     Input Pembayaran

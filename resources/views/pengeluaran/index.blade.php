@@ -33,17 +33,6 @@
                 <h5><span class="material-symbols-outlined">edit_note</span> Catat Pengeluaran</h5>
             </div>
             <div class="content-card-body">
-                @if($errors->any())
-                    <div class="alert-modern alert-danger-modern">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <div>
-                            @foreach($errors->all() as $error)
-                                <div>{{ $error }}</div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
                 <form action="{{ route('pengeluaran.store') }}" method="POST">
                     @csrf
                     <div class="mb-3">
@@ -92,9 +81,25 @@
                 <h5><span class="material-symbols-outlined">receipt_long</span> Riwayat Pengeluaran</h5>
                 <span class="badge-status badge-danger">{{ $pengeluarans->count() }} transaksi</span>
             </div>
+            <form method="GET" action="{{ route('pengeluaran.index') }}" class="filter-box">
+                <input class="compact-input" type="search" name="search" value="{{ request('search') }}" placeholder="Cari kategori/keterangan...">
+                <select name="kategori" class="compact-input">
+                    <option value="">Semua Kategori</option>
+                    @foreach($kategoriList as $kategori)
+                        <option value="{{ $kategori }}" {{ request('kategori') === $kategori ? 'selected' : '' }}>{{ $kategori }}</option>
+                    @endforeach
+                </select>
+                <input class="compact-input" type="date" name="tanggal_mulai" value="{{ request('tanggal_mulai') }}" title="Tanggal mulai">
+                <input class="compact-input" type="date" name="tanggal_selesai" value="{{ request('tanggal_selesai') }}" title="Tanggal selesai">
+                <button type="submit" class="btn-primary-custom">
+                    <span class="material-symbols-outlined" style="font-size:18px;">filter_alt</span>
+                    Terapkan Filter
+                </button>
+                <a href="{{ route('pengeluaran.index') }}" class="btn-secondary-custom">Reset</a>
+            </form>
             <div class="content-card-body flush">
                 @if($pengeluarans->count() > 0)
-                    <div class="table-responsive">
+                    <div class="table-scroll">
                         <table class="table-modern">
                             <thead>
                                 <tr>
@@ -135,8 +140,8 @@
                 @else
                     <div class="empty-state">
                         <span class="material-symbols-outlined">account_balance_wallet</span>
-                        <h6>Belum ada pengeluaran</h6>
-                        <p>Gunakan form di sebelah kiri untuk mencatat biaya operasional.</p>
+                        <h6>Data tidak ditemukan</h6>
+                        <p>Ubah filter atau catat pengeluaran baru.</p>
                     </div>
                 @endif
             </div>

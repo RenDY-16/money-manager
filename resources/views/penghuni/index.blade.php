@@ -1,20 +1,22 @@
 @extends('layouts.app')
 
 @section('title', 'Data Penghuni')
-@section('subtitle', 'Kelola identitas penghuni dan histori masa tinggal')
+@section('subtitle', 'Kelola identitas penghuni dan status pembayaran')
 
 @section('content')
 @php
-    $aktif = $penghunis->whereNull('tanggal_keluar')->count();
-    $nonaktif = $penghunis->whereNotNull('tanggal_keluar')->count();
-    $total = $penghunis->count();
-    $kamarAktif = $penghunis->whereNull('tanggal_keluar')->pluck('kamar_id')->unique()->count();
+    $statSource = $allPenghunis ?? $penghunis;
+    $aktif = $statSource->whereNull('tanggal_keluar')->count();
+    $nonaktif = $statSource->whereNotNull('tanggal_keluar')->count();
+    $total = $statSource->count();
+    $lunas = $statSource->whereNull('tanggal_keluar')->where('status_pembayaran_bulan_ini', 'lunas')->count();
+    $belumLunas = $statSource->whereNull('tanggal_keluar')->where('status_pembayaran_bulan_ini', 'belum_lunas')->count();
 @endphp
 
 <div class="page-heading">
     <div>
         <h1>Data Penghuni</h1>
-        <p>Kelola data penghuni aktif, kamar yang ditempati, dan tanggal masuk.</p>
+        <p>Kelola data penghuni aktif, kamar yang ditempati, dan status pembayaran bulan {{ $periodeTagihan ?? now()->format('F Y') }}.</p>
     </div>
     <a href="{{ route('penghuni.create') }}" class="btn-primary-custom">
         <span class="material-symbols-outlined" style="font-size:18px;">person_add</span>
@@ -22,7 +24,7 @@
     </a>
 </div>
 
-<div class="metric-grid">
+<div class="metric-grid metric-grid-5">
     <div class="metric-card">
         <div class="metric-top"><span class="material-symbols-outlined metric-icon">groups</span></div>
         <div class="metric-label">Total Penghuni</div>
@@ -36,32 +38,48 @@
         <div class="metric-note">Masih tinggal di kost</div>
     </div>
     <div class="metric-card">
-        <div class="metric-top"><span class="material-symbols-outlined metric-icon warning">logout</span></div>
+        <div class="metric-top"><span class="material-symbols-outlined metric-icon danger">logout</span></div>
         <div class="metric-label">Sudah Keluar</div>
         <div class="metric-value">{{ $nonaktif }}</div>
         <div class="metric-note">Memiliki tanggal keluar</div>
     </div>
     <div class="metric-card">
-        <div class="metric-top"><span class="material-symbols-outlined metric-icon">bedroom_parent</span></div>
-        <div class="metric-label">Kamar Aktif</div>
-        <div class="metric-value">{{ $kamarAktif }}</div>
-        <div class="metric-note">Ditempati penghuni aktif</div>
+        <div class="metric-top"><span class="material-symbols-outlined metric-icon success">check_circle</span></div>
+        <div class="metric-label">Lunas Bulan Ini</div>
+        <div class="metric-value">{{ $lunas }}</div>
+        <div class="metric-note">Pembayaran kost tercatat</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-top"><span class="material-symbols-outlined metric-icon warning">pending_actions</span></div>
+        <div class="metric-label">Belum Lunas</div>
+        <div class="metric-value">{{ $belumLunas }}</div>
+        <div class="metric-note">Perlu diingatkan</div>
     </div>
 </div>
 
 <div class="content-card">
-    <div class="filter-box">
-        <input class="compact-input" type="search" placeholder="Cari nama penghuni...">
-        <select class="compact-input">
-            <option>Semua Status</option>
-            <option>Aktif</option>
-            <option>Sudah Keluar</option>
+    <form method="GET" action="{{ route('penghuni.index') }}" class="filter-box">
+        <input class="compact-input" name="search" type="search" value="{{ request('search') }}" placeholder="Cari nama, HP, atau kamar...">
+        <select class="compact-input" name="status">
+            <option value="">Semua Status Tinggal</option>
+            <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+            <option value="keluar" {{ request('status') === 'keluar' ? 'selected' : '' }}>Sudah Keluar</option>
         </select>
+        <select class="compact-input" name="pembayaran">
+            <option value="">Semua Status Bayar</option>
+            <option value="lunas" {{ request('pembayaran') === 'lunas' ? 'selected' : '' }}>Lunas</option>
+            <option value="belum_lunas" {{ request('pembayaran') === 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
+        </select>
+        <button type="submit" class="btn-primary-custom">
+            <span class="material-symbols-outlined" style="font-size:18px;">filter_alt</span>
+            Terapkan Filter
+        </button>
+        <a href="{{ route('penghuni.index') }}" class="btn-secondary-custom">Reset</a>
         <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $penghunis->count() }} data penghuni</span>
-    </div>
+    </form>
     <div class="content-card-body flush">
         @if($penghunis->count() > 0)
-        <div class="table-responsive">
+        <div class="table-scroll">
             <table class="table-modern">
                 <thead>
                     <tr>
@@ -70,7 +88,8 @@
                         <th>No. HP</th>
                         <th>Kamar</th>
                         <th>Tanggal Masuk</th>
-                        <th>Status</th>
+                        <th>Status Tinggal</th>
+                        <th>Status Bayar</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -83,7 +102,7 @@
                                 <span class="row-avatar">{{ strtoupper(substr($penghuni->nama, 0, 2)) }}</span>
                                 <div>
                                     {{ $penghuni->nama }}
-                                    <div class="text-muted small fw-semibold">ID: PGH-{{ str_pad($penghuni->id, 3, '0', STR_PAD_LEFT) }}</div>
+                                    <div class="cell-muted">ID: PGH-{{ str_pad($penghuni->id, 3, '0', STR_PAD_LEFT) }}</div>
                                 </div>
                             </div>
                         </td>
@@ -91,6 +110,7 @@
                         <td>
                             @if($penghuni->kamar)
                                 <span class="badge-status badge-blue">Kamar {{ $penghuni->kamar->nomor_kamar }}</span>
+                                <div class="cell-muted">Rp {{ number_format($penghuni->kamar->harga, 0, ',', '.') }}/bulan</div>
                             @else
                                 <span class="badge-status badge-neutral">Kamar Terhapus</span>
                             @endif
@@ -101,6 +121,15 @@
                                 <span class="badge-status badge-danger">Keluar</span>
                             @else
                                 <span class="badge-status badge-success">Aktif</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($penghuni->tanggal_keluar)
+                                <span class="badge-status badge-neutral">Tidak Aktif</span>
+                            @elseif($penghuni->status_pembayaran_bulan_ini === 'lunas')
+                                <span class="badge-status badge-success">Lunas</span>
+                            @else
+                                <span class="badge-status badge-warning">Belum Lunas</span>
                             @endif
                         </td>
                         <td>
@@ -123,9 +152,9 @@
         </div>
         @else
         <div class="empty-state">
-            <span class="material-symbols-outlined">groups</span>
-            <h6>Belum ada data penghuni</h6>
-            <p>Tambahkan penghuni baru untuk mulai mengelola hunian.</p>
+            <span class="material-symbols-outlined">group</span>
+            <h6>Data tidak ditemukan</h6>
+            <p>Ubah filter atau tambah penghuni baru.</p>
         </div>
         @endif
     </div>
