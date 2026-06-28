@@ -14,8 +14,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (str_contains(config('app.url'), 'railway.app') || app()->environment('development')) {
-            URL::forceScheme('https');
+        if (config('app.env') != 'local') {
+            \URL::forceScheme('https');
         }
     }
 }
