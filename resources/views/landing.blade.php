@@ -655,13 +655,7 @@
                     <p>Admin dapat mengatur nama, email, password, dan foto profil.</p>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-palette"></i>
-                    </div>
-                    <h6>Tema Tampilan</h6>
-                    <p>Gunakan tema gelap solid agar tampilan lebih fokus dan tetap mudah dibaca.</p>
-                </div>
+                
             </div>
         </section>
     </div>
