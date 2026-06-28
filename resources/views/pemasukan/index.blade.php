@@ -1,91 +1,150 @@
 @extends('layouts.app')
 
-@section('title', 'Data Pemasukan')
-@section('subtitle', 'Catatan semua uang masuk kost')
+@section('title', 'Manajemen Pemasukan')
+@section('subtitle', 'Catat pembayaran dan riwayat pemasukan kost')
 
 @section('content')
-<div class="summary-card animate-in">
-    <div class="summary-icon">
-        <i class="bi bi-wallet2"></i>
-    </div>
+<div class="page-heading">
     <div>
-        <div class="summary-label">Total Akumulasi Pemasukan</div>
-        <div class="summary-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
+        <h1>Manajemen Pemasukan</h1>
+        <p>Catat pembayaran penghuni dan pantau pemasukan yang sudah masuk.</p>
+    </div>
+    <a href="{{ route('pemasukan.create') }}" class="btn-secondary-custom">
+        <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span>
+        Form Halaman Penuh
+    </a>
+</div>
+
+<div class="summary-strip mb-4">
+    <div class="finance-panel primary">
+        <div class="label"><span class="material-symbols-outlined">payments</span> Total Pemasukan</div>
+        <div class="value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
+    </div>
+    <div class="finance-panel">
+        <div class="label"><span class="material-symbols-outlined">calendar_month</span> Bulan Ini</div>
+        <div class="value text-success">Rp {{ number_format($pemasukanBulanIni, 0, ',', '.') }}</div>
+    </div>
+    <div class="finance-panel">
+        <div class="label"><span class="material-symbols-outlined">group</span> Penghuni Aktif</div>
+        <div class="value">{{ $penghunis->count() }} Orang</div>
     </div>
 </div>
 
-<div class="content-card animate-in">
-    <div class="content-card-header">
-        <h5><i class="bi bi-graph-up-arrow"></i> Catatan Pemasukan</h5>
-        <a href="{{ route('pemasukan.create') }}" class="btn-primary-custom">
-            <i class="bi bi-plus-lg"></i> Tambah Pemasukan
-        </a>
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h5><span class="material-symbols-outlined">add_card</span> Catat Pembayaran</h5>
+            </div>
+            <div class="content-card-body">
+                @if($errors->any())
+                    <div class="alert-modern" style="background: var(--danger-soft); color: #991b1b; border-color: #fecaca;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>
+                            @foreach($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <form action="{{ route('pemasukan.store') }}" method="POST">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label">Penghuni</label>
+                        <select name="penghuni_id" class="form-select" required>
+                            <option value="">Pilih penghuni</option>
+                            @foreach($penghunis as $penghuni)
+                                <option value="{{ $penghuni->id }}" {{ old('penghuni_id') == $penghuni->id ? 'selected' : '' }}>
+                                    {{ $penghuni->nama }} @if($penghuni->kamar) - Kamar {{ $penghuni->kamar->nomor_kamar }} @endif
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tanggal</label>
+                        <input type="date" name="tanggal" class="form-control" value="{{ old('tanggal', date('Y-m-d')) }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jumlah Pembayaran</label>
+                        <input type="number" name="jumlah" class="form-control" value="{{ old('jumlah') }}" placeholder="Contoh: 850000" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Keterangan</label>
+                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Pembayaran bulan ini">{{ old('keterangan') }}</textarea>
+                    </div>
+                    <button type="submit" class="btn-primary-custom w-100" {{ $penghunis->isEmpty() ? 'disabled' : '' }}>
+                        <span class="material-symbols-outlined" style="font-size:18px;">save</span>
+                        Simpan Transaksi
+                    </button>
+                    @if($penghunis->isEmpty())
+                        <div class="text-danger small fw-semibold mt-3">Tidak ada penghuni aktif. Tambahkan penghuni terlebih dahulu.</div>
+                    @endif
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="content-card-body">
-        @if($pemasukans->count() > 0)
-        <div class="table-responsive">
-            <table class="table-modern">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Penghuni</th>
-                        <th>Kamar</th>
-                        <th>Jumlah</th>
-                        <th>Tanggal</th>
-                        <th>Keterangan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($pemasukans as $i => $pemasukan)
-                    <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>
-                            @if($pemasukan->penghuni)
-                            <strong style="color: var(--navy-900);">{{ $pemasukan->penghuni->nama }}</strong>
-                            @else
-                            <span class="text-muted">Penghuni Terhapus</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($pemasukan->penghuni && $pemasukan->penghuni->kamar)
-                            <span class="badge-status badge-single">
-                                Kamar {{ $pemasukan->penghuni->kamar->nomor_kamar }}
-                            </span>
-                            @else
-                            <span class="text-muted">-</span>
-                            @endif
-                        </td>
-                        <td>
-                            <strong class="text-success">+ Rp {{ number_format($pemasukan->jumlah, 0, ',', '.') }}</strong>
-                        </td>
-                        <td>{{ \Carbon\Carbon::parse($pemasukan->tanggal)->locale('id')->translatedFormat('d F Y') }}</td>
-                        <td>{{ $pemasukan->keterangan ?? '-' }}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{{ route('pemasukan.edit', $pemasukan) }}" class="btn-action btn-edit" title="Edit">
-                                    <i class="bi bi-pencil-fill"></i>
-                                </a>
-                                <form action="{{ route('pemasukan.destroy', $pemasukan) }}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus catatan pemasukan ini?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn-action btn-delete" title="Hapus">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+
+    <div class="col-xl-8">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h5><span class="material-symbols-outlined">receipt_long</span> Riwayat Pemasukan</h5>
+                <span class="badge-status badge-blue">{{ $pemasukans->count() }} transaksi</span>
+            </div>
+            <div class="content-card-body flush">
+                @if($pemasukans->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Penghuni</th>
+                                    <th class="text-end">Jumlah</th>
+                                    <th>Keterangan</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pemasukans as $pemasukan)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($pemasukan->tanggal)->locale('id')->translatedFormat('d M Y') }}</td>
+                                    <td>
+                                        <div class="table-title">
+                                            <span class="row-avatar">{{ strtoupper(substr(optional($pemasukan->penghuni)->nama ?? 'PT', 0, 2)) }}</span>
+                                            {{ optional($pemasukan->penghuni)->nama ?? 'Penghuni terhapus' }}
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-bold text-success">Rp {{ number_format($pemasukan->jumlah, 0, ',', '.') }}</td>
+                                    <td>{{ $pemasukan->keterangan ?: '-' }}</td>
+                                    <td><span class="badge-status badge-success">Berhasil</span></td>
+                                    <td>
+                                        <div class="action-buttons justify-content-end">
+                                            <a href="{{ route('pemasukan.edit', $pemasukan) }}" class="btn-action btn-edit" title="Edit">
+                                                <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+                                            </a>
+                                            <form action="{{ route('pemasukan.destroy', $pemasukan) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus pemasukan ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                                    <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">payments</span>
+                        <h6>Belum ada pemasukan</h6>
+                        <p>Gunakan form di sebelah kiri untuk mencatat pembayaran pertama.</p>
+                    </div>
+                @endif
+            </div>
         </div>
-        @else
-        <div class="empty-state">
-            <i class="bi bi-wallet2"></i>
-            <h6>Belum ada data pemasukan</h6>
-            <p>Klik tombol "Tambah Pemasukan" untuk mencatat pemasukan baru</p>
-        </div>
-        @endif
     </div>
 </div>
 @endsection

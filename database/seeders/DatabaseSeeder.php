@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Admin Kost AJ',
             'email' => 'admin@kostaj.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('admin123'),
         ]);
 
         // 2. Seed Kamar

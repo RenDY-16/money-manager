@@ -1,126 +1,168 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
-@section('subtitle', 'Ringkasan data kost Anda hari ini')
+@section('title', 'Financial Management')
+@section('subtitle', 'Ringkasan operasional dan keuangan kost')
 
 @section('content')
+@php
+    $maxChart = max(array_merge($chartPemasukan, $chartPengeluaran, [1]));
+@endphp
+
+<div class="metric-grid metric-grid-5">
+    <div class="metric-card card-hover">
+        <div class="metric-top">
+            <span class="material-symbols-outlined metric-icon success">trending_up</span>
+            <span class="metric-trend">+12%</span>
+        </div>
+        <div class="metric-label">Total Pemasukan</div>
+        <div class="metric-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
+        <div class="metric-note">Akumulasi pembayaran masuk</div>
+    </div>
+
+    <div class="metric-card card-hover">
+        <div class="metric-top">
+            <span class="material-symbols-outlined metric-icon danger">trending_down</span>
+            <span class="metric-trend" style="color:var(--danger);">-4%</span>
+        </div>
+        <div class="metric-label">Total Pengeluaran</div>
+        <div class="metric-value">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
+        <div class="metric-note">Biaya operasional tercatat</div>
+    </div>
+
+    <div class="metric-card card-hover">
+        <div class="metric-top">
+            <span class="material-symbols-outlined metric-icon">account_balance_wallet</span>
+            <span class="metric-trend">Net</span>
+        </div>
+        <div class="metric-label">Saldo Bersih</div>
+        <div class="metric-value">Rp {{ number_format($saldoBersih, 0, ',', '.') }}</div>
+        <div class="metric-note">Selisih pemasukan dan biaya</div>
+    </div>
+
+    <div class="metric-card card-hover">
+        <div class="metric-top">
+            <span class="material-symbols-outlined metric-icon warning">bed</span>
+            <span class="metric-trend">{{ $okupansi }}%</span>
+        </div>
+        <div class="metric-label">Okupansi Kamar</div>
+        <div class="metric-value">{{ $kamarTerisi }} / {{ $totalKamar }}</div>
+        <div class="metric-note">Kamar terisi saat ini</div>
+    </div>
+
+    <div class="metric-card card-hover">
+        <div class="metric-top">
+            <span class="material-symbols-outlined metric-icon">calendar_month</span>
+            <span class="metric-trend">{{ date('d M') }}</span>
+        </div>
+        <div class="metric-label">Kamar Tersedia</div>
+        <div class="metric-value">{{ $kamarTersedia }}</div>
+        <div class="metric-note">Siap ditempati penghuni baru</div>
+    </div>
+</div>
+
 <div class="row g-4 mb-4">
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card blue animate-in">
-            <div class="stat-icon">
-                <i class="bi bi-door-open-fill"></i>
+    <div class="col-xl-8">
+        <div class="content-card h-100">
+            <div class="content-card-header">
+                <h5><span class="material-symbols-outlined">bar_chart</span> Statistik Keuangan</h5>
+                <div class="d-flex align-items-center gap-3 small fw-bold text-muted">
+                    <span><i class="legend-dot" style="background:#9fb2e9;"></i>Pemasukan</span>
+                    <span><i class="legend-dot" style="background:#f3b7bd;"></i>Pengeluaran</span>
+                </div>
             </div>
-            <div class="stat-value">{{ $totalKamar }}</div>
-            <div class="stat-label">Total Kamar</div>
+            <div class="content-card-body">
+                <div class="css-chart">
+                    @foreach($chartLabels as $index => $label)
+                        @php
+                            $incomeHeight = max(4, ($chartPemasukan[$index] / $maxChart) * 210);
+                            $expenseHeight = max(4, ($chartPengeluaran[$index] / $maxChart) * 210);
+                        @endphp
+                        <div class="chart-month">
+                            <div class="chart-bars">
+                                <div class="chart-bar income" style="height: {{ $incomeHeight }}px" title="Pemasukan {{ $label }}"></div>
+                                <div class="chart-bar expense" style="height: {{ $expenseHeight }}px" title="Pengeluaran {{ $label }}"></div>
+                            </div>
+                            <div class="chart-label">{{ $label }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card emerald animate-in">
-            <div class="stat-icon">
-                <i class="bi bi-people-fill"></i>
+
+    <div class="col-xl-4">
+        <div class="content-card h-100">
+            <div class="content-card-header">
+                <h5><span class="material-symbols-outlined">fact_check</span> Status Pembayaran</h5>
             </div>
-            <div class="stat-value">{{ $totalPenghuni }}</div>
-            <div class="stat-label">Total Penghuni Aktif</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card gold animate-in">
-            <div class="stat-icon">
-                <i class="bi bi-graph-up-arrow"></i>
+            <div class="content-card-body">
+                <div class="finance-panel mb-3">
+                    <div class="label"><span class="material-symbols-outlined">door_open</span> Kamar Tersedia</div>
+                    <div class="value text-success">{{ $kamarTersedia }} Kamar</div>
+                </div>
+                <div class="finance-panel mb-3">
+                    <div class="label"><span class="material-symbols-outlined">groups</span> Penghuni Aktif</div>
+                    <div class="value">{{ $totalPenghuni }} Orang</div>
+                </div>
+                <a href="{{ route('pemasukan.index') }}" class="btn-primary-custom w-100 mb-2">
+                    <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+                    Input Pembayaran
+                </a>
+                <a href="{{ route('laporan.index') }}" class="btn-secondary-custom w-100">
+                    <span class="material-symbols-outlined" style="font-size:18px;">description</span>
+                    Buka Laporan
+                </a>
             </div>
-            <div class="stat-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
-            <div class="stat-label">Total Pemasukan</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card rose animate-in">
-            <div class="stat-icon">
-                <i class="bi bi-graph-down-arrow"></i>
-            </div>
-            <div class="stat-value">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
-            <div class="stat-label">Total Pengeluaran</div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="content-card animate-in">
-            <div class="content-card-header">
-                <h5><i class="bi bi-bar-chart-fill"></i> Ringkasan Keuangan</h5>
-            </div>
-            <div class="content-card-body" style="padding: 24px;">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); padding: 20px; border-radius: 12px;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                                <i class="bi bi-arrow-up-circle-fill" style="color: #059669; font-size: 20px;"></i>
-                                <span style="font-size: 13px; color: #065f46; font-weight: 600;">Pemasukan</span>
-                            </div>
-                            <div style="font-size: 22px; font-weight: 800; color: #065f46;">
-                                Rp {{ number_format($totalPemasukan, 0, ',', '.') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div style="background: linear-gradient(135deg, #fff1f2, #fce7f3); padding: 20px; border-radius: 12px;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                                <i class="bi bi-arrow-down-circle-fill" style="color: #e11d48; font-size: 20px;"></i>
-                                <span style="font-size: 13px; color: #9d174d; font-weight: 600;">Pengeluaran</span>
-                            </div>
-                            <div style="font-size: 22px; font-weight: 800; color: #9d174d;">
-                                Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        @php $saldo = $totalPemasukan - $totalPengeluaran; @endphp
-                        <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 20px; border-radius: 12px;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                                <i class="bi bi-wallet2" style="color: #1e40af; font-size: 20px;"></i>
-                                <span style="font-size: 13px; color: #1e40af; font-weight: 600;">Saldo Bersih</span>
-                            </div>
-                            <div style="font-size: 26px; font-weight: 800; color: {{ $saldo >= 0 ? '#065f46' : '#e11d48' }};">
-                                Rp {{ number_format($saldo, 0, ',', '.') }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="content-card">
+    <div class="content-card-header">
+        <h5><span class="material-symbols-outlined">receipt_long</span> Transaksi Terbaru</h5>
+        <a href="{{ route('laporan.index') }}" class="btn-secondary-custom">Lihat Detail</a>
     </div>
-
-    <div class="col-lg-4">
-        <div class="content-card animate-in">
-            <div class="content-card-header">
-                <h5><i class="bi bi-door-open-fill"></i> Status Kamar</h5>
+    <div class="content-card-body flush">
+        @if($latestTransaksi->count() > 0)
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Jenis</th>
+                            <th>Nama/Kategori</th>
+                            <th>Keterangan</th>
+                            <th class="text-end">Jumlah</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($latestTransaksi as $transaksi)
+                            <tr>
+                                <td>{{ \Carbon\Carbon::parse($transaksi['tanggal'])->locale('id')->translatedFormat('d M Y') }}</td>
+                                <td>
+                                    <span class="badge-status {{ $transaksi['jenis'] === 'Pemasukan' ? 'badge-success' : 'badge-danger' }}">
+                                        {{ $transaksi['jenis'] }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-primary">{{ $transaksi['nama'] }}</td>
+                                <td>{{ $transaksi['keterangan'] }}</td>
+                                <td class="text-end fw-bold {{ $transaksi['jenis'] === 'Pemasukan' ? 'text-success' : 'text-danger' }}">
+                                    {{ $transaksi['jenis'] === 'Pemasukan' ? '+' : '-' }} Rp {{ number_format($transaksi['jumlah'], 0, ',', '.') }}
+                                </td>
+                                <td><span class="badge-status badge-paid">{{ $transaksi['status'] }}</span></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-            <div class="content-card-body" style="padding: 24px;">
-                <div style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 13px; color: #64748b; font-weight: 500;">Tersedia</span>
-                        <span style="font-size: 13px; font-weight: 700; color: #059669;">{{ $kamarTersedia }}</span>
-                    </div>
-                    <div style="height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; width: {{ $totalKamar > 0 ? ($kamarTersedia / $totalKamar) * 100 : 0 }}%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 4px; transition: width 0.6s ease;"></div>
-                    </div>
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 13px; color: #64748b; font-weight: 500;">Terisi</span>
-                        <span style="font-size: 13px; font-weight: 700; color: #e11d48;">{{ $kamarTerisi }}</span>
-                    </div>
-                    <div style="height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; width: {{ $totalKamar > 0 ? ($kamarTerisi / $totalKamar) * 100 : 0 }}%; background: linear-gradient(90deg, #f43f5e, #fb7185); border-radius: 4px; transition: width 0.6s ease;"></div>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
-                    <div style="font-size: 36px; font-weight: 800; color: var(--navy-900);">{{ $totalKamar }}</div>
-                    <div style="font-size: 13px; color: #94a3b8; font-weight: 500;">Total Kamar</div>
-                </div>
+        @else
+            <div class="empty-state">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <h6>Belum ada transaksi</h6>
+                <p>Input pemasukan atau pengeluaran untuk melihat aktivitas terbaru.</p>
             </div>
-        </div>
+        @endif
     </div>
 </div>
 @endsection

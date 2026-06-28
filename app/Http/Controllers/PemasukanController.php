@@ -3,16 +3,21 @@ namespace App\Http\Controllers;
 use App\Models\Pemasukan;
 use App\Models\Penghuni;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PemasukanController extends Controller {
     public function index(){
         $pemasukans = Pemasukan::with('penghuni')->latest()->get();
-        $totalPemasukan = Pemasukan::sum('jumlah');
-        return view('pemasukan.index', compact('pemasukans', 'totalPemasukan'));
+        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
+        $totalPemasukan = (float) Pemasukan::sum('jumlah');
+        $pemasukanBulanIni = (float) Pemasukan::all()
+            ->filter(fn ($item) => Carbon::parse($item->tanggal)->isSameMonth(Carbon::now()))
+            ->sum('jumlah');
+        return view('pemasukan.index', compact('pemasukans', 'penghunis', 'totalPemasukan', 'pemasukanBulanIni'));
     }
 
     public function create(){
-        $penghunis = Penghuni::whereNull('tanggal_keluar')->get();
+        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
         return view('pemasukan.create', compact('penghunis'));
     }
 
@@ -21,6 +26,7 @@ class PemasukanController extends Controller {
             'penghuni_id' => 'required|exists:penghunis,id',
             'jumlah' => 'required|numeric|min:0',
             'tanggal' => 'required|date',
+            'keterangan' => 'nullable|string|max:255',
         ]);
         Pemasukan::create($request->all());
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil ditambahkan!');
@@ -36,6 +42,7 @@ class PemasukanController extends Controller {
             'penghuni_id' => 'required|exists:penghunis,id',
             'jumlah' => 'required|numeric|min:0',
             'tanggal' => 'required|date',
+            'keterangan' => 'nullable|string|max:255',
         ]);
         $pemasukan->update($request->all());
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil diperbarui!');

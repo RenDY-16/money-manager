@@ -1,278 +1,328 @@
 @extends('layouts.app')
 
 @section('title', 'Laporan Keuangan')
-@section('subtitle', 'Laporan grafis pemasukan dan pengeluaran kost tahun ' . $year)
+@section('subtitle', 'Analisis pemasukan, pengeluaran, dan saldo bersih')
 
 @section('content')
-<!-- Summary Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-xl-4 col-md-6">
-        <div class="stat-card gold animate-in">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706;">
-                <i class="bi bi-graph-up-arrow"></i>
-            </div>
-            <div class="stat-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
-            <div class="stat-label">Total Pemasukan ({{ $year }})</div>
-        </div>
+<div class="page-heading no-print">
+    <div>
+        <h1>Laporan Keuangan</h1>
+        <p>Ringkasan keuangan berdasarkan filter: <strong>{{ $filterLabel }}</strong>.</p>
     </div>
-    <div class="col-xl-4 col-md-6">
-        <div class="stat-card rose animate-in">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #e11d48;">
-                <i class="bi bi-graph-down-arrow"></i>
-            </div>
-            <div class="stat-value">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
-            <div class="stat-label">Total Pengeluaran ({{ $year }})</div>
-        </div>
-    </div>
-    <div class="col-xl-4 col-md-12">
-        <div class="stat-card blue animate-in">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: var(--navy-600);">
-                <i class="bi bi-wallet2"></i>
-            </div>
-            <div class="stat-value" style="color: {{ $saldoBersih >= 0 ? '#059669' : '#e11d48' }};">
-                Rp {{ number_format($saldoBersih, 0, ',', '.') }}
-            </div>
-            <div class="stat-label">Saldo Bersih ({{ $year }})</div>
-        </div>
-    </div>
+    <button type="button" onclick="printCleanReport()" class="btn-primary-custom">
+        <span class="material-symbols-outlined" style="font-size:18px;">print</span>
+        Cetak Laporan
+    </button>
 </div>
 
-<!-- Chart Section -->
-<div class="row g-4 mb-4">
-    <!-- Bar Chart (Monthly) -->
-    <div class="col-lg-8">
-        <div class="content-card animate-in h-100">
-            <div class="content-card-header">
-                <h5><i class="bi bi-bar-chart-line-fill"></i> Grafik Keuangan Bulanan ({{ $year }})</h5>
+<form method="GET" action="{{ route('laporan.index') }}" class="filter-box mb-4 rounded no-print" style="border:1px solid var(--border);">
+    <select name="bulan" class="compact-input">
+        <option value="semua" {{ $selectedMonth === 'semua' ? 'selected' : '' }}>Semua Bulan</option>
+        @foreach($months as $monthNumber => $monthName)
+            <option value="{{ $monthNumber }}" {{ (string) $selectedMonth === (string) $monthNumber ? 'selected' : '' }}>{{ $monthName }}</option>
+        @endforeach
+    </select>
+    <select name="tahun" class="compact-input">
+        @foreach($availableYears as $availableYear)
+            <option value="{{ $availableYear }}" {{ (int) $selectedYear === (int) $availableYear ? 'selected' : '' }}>{{ $availableYear }}</option>
+        @endforeach
+    </select>
+    <select name="jenis" class="compact-input">
+        <option value="semua" {{ $selectedType === 'semua' ? 'selected' : '' }}>Semua Transaksi</option>
+        <option value="pemasukan" {{ $selectedType === 'pemasukan' ? 'selected' : '' }}>Pemasukan</option>
+        <option value="pengeluaran" {{ $selectedType === 'pengeluaran' ? 'selected' : '' }}>Pengeluaran</option>
+    </select>
+    <button type="submit" class="btn-primary-custom">
+        <span class="material-symbols-outlined" style="font-size:18px;">filter_alt</span>
+        Terapkan Filter
+    </button>
+    <a href="{{ route('laporan.index') }}" class="btn-secondary-custom">Reset</a>
+</form>
+
+<div id="printArea">
+    <div class="d-none d-print-block mb-4">
+        <h2 style="margin:0;color:#00288e;font-weight:800;">Laporan Keuangan Kost AJ Lanraki</h2>
+        <p style="margin:4px 0 0;color:#444653;">{{ $filterLabel }}</p>
+        <hr>
+    </div>
+
+    <div class="summary-strip mb-4">
+        <div class="finance-panel">
+            <div class="label"><span class="material-symbols-outlined">trending_up</span> Total Pemasukan</div>
+            <div class="value text-success">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
+        </div>
+        <div class="finance-panel">
+            <div class="label"><span class="material-symbols-outlined">trending_down</span> Total Pengeluaran</div>
+            <div class="value text-danger">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
+        </div>
+        <div class="finance-panel primary">
+            <div class="label"><span class="material-symbols-outlined">account_balance</span> Saldo Bersih</div>
+            <div class="value">Rp {{ number_format($saldoBersih, 0, ',', '.') }}</div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="content-card h-100">
+                <div class="content-card-header">
+                    <h5><span class="material-symbols-outlined">monitoring</span> Tren Keuangan</h5>
+                    <span class="badge-status badge-blue">{{ $filterLabel }}</span>
+                </div>
+                <div class="content-card-body">
+                    <div style="height: 320px;">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
             </div>
-            <div class="content-card-body" style="padding: 24px;">
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="financialChart"></canvas>
+        </div>
+        <div class="col-xl-4">
+            <div class="content-card h-100">
+                <div class="content-card-header">
+                    <h5><span class="material-symbols-outlined">donut_large</span> Distribusi Pengeluaran</h5>
+                </div>
+                <div class="content-card-body">
+                    @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
+                        <div style="height: 320px;">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    @else
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">donut_large</span>
+                            <h6>Belum ada data kategori</h6>
+                            <p>Data pengeluaran per kategori akan muncul sesuai filter yang dipilih.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-    <!-- Doughnut Chart (Categories) -->
-    <div class="col-lg-4">
-        <div class="content-card animate-in h-100">
-            <div class="content-card-header">
-                <h5><i class="bi bi-pie-chart-fill"></i> Kategori Pengeluaran Terbesar</h5>
-            </div>
-            <div class="content-card-body" style="padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 350px;">
-                @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
-                    <div style="position: relative; height: 260px; width: 100%;">
-                        <canvas id="categoryChart"></canvas>
+
+    <div class="row g-4">
+        @if($selectedType !== 'pengeluaran')
+        <div class="col-xl-6">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5><span class="material-symbols-outlined">payments</span> Pemasukan Terbaru</h5>
+                    <span class="badge-status badge-success">Income</span>
+                </div>
+                <div class="content-card-body flush">
+                    @if($latestPemasukan->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Penghuni</th>
+                                    <th>Keterangan</th>
+                                    <th class="text-end">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($latestPemasukan as $item)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d M Y') }}</td>
+                                    <td>{{ optional($item->penghuni)->nama ?? 'Penghuni terhapus' }}</td>
+                                    <td>{{ $item->keterangan ?: 'Pembayaran kost' }}</td>
+                                    <td class="text-end fw-bold text-success">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                @else
-                    <div class="empty-state py-4">
-                        <i class="bi bi-info-circle" style="font-size: 40px; color: #cbd5e1;"></i>
-                        <h6 class="mt-2 text-muted">Belum Ada Data Pengeluaran</h6>
-                        <p class="text-muted small">Data kategori akan muncul setelah ada transaksi pengeluaran di tahun ini.</p>
-                    </div>
-                @endif
+                    @else
+                        <div class="empty-state py-4">
+                            <h6>Belum ada pemasukan sesuai filter</h6>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
-</div>
+        @endif
 
-<!-- Detailed Table Section -->
-<div class="content-card animate-in">
-    <div class="content-card-header">
-        <h5><i class="bi bi-table"></i> Rincian Bulanan</h5>
-    </div>
-    <div class="content-card-body">
-        <div class="table-responsive">
-            <table class="table-modern">
-                <thead>
-                    <tr>
-                        <th>Bulan</th>
-                        <th>Total Pemasukan</th>
-                        <th>Total Pengeluaran</th>
-                        <th>Selisih (Laba/Rugi)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($chartLabels as $index => $label)
-                    @php
-                        $pemasukan = $chartPemasukan[$index];
-                        $pengeluaran = $chartPengeluaran[$index];
-                        $selisih = $pemasukan - $pengeluaran;
-                    @endphp
-                    <tr>
-                        <td><strong>{{ $label }}</strong></td>
-                        <td class="text-success">+ Rp {{ number_format($pemasukan, 0, ',', '.') }}</td>
-                        <td class="text-danger">- Rp {{ number_format($pengeluaran, 0, ',', '.') }}</td>
-                        <td>
-                            @if($selisih > 0)
-                                <strong class="text-success">+ Rp {{ number_format($selisih, 0, ',', '.') }}</strong>
-                            @elseif($selisih < 0)
-                                <strong class="text-danger">Rp {{ number_format($selisih, 0, ',', '.') }}</strong>
-                            @else
-                                <span class="text-muted">Rp 0</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        @if($selectedType !== 'pemasukan')
+        <div class="col-xl-6">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5><span class="material-symbols-outlined">account_balance_wallet</span> Pengeluaran Terbaru</h5>
+                    <span class="badge-status badge-danger">Expense</span>
+                </div>
+                <div class="content-card-body flush">
+                    @if($latestPengeluaran->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kategori</th>
+                                    <th>Keterangan</th>
+                                    <th class="text-end">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($latestPengeluaran as $item)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d M Y') }}</td>
+                                    <td>{{ $item->kategori }}</td>
+                                    <td>{{ $item->keterangan ?: 'Biaya operasional' }}</td>
+                                    <td class="text-end fw-bold text-danger">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @else
+                        <div class="empty-state py-4">
+                            <h6>Belum ada pengeluaran sesuai filter</h6>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
+        @endif
     </div>
 </div>
+@endsection
 
-<!-- Load Chart.js from CDN -->
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Monthly Financial Chart (Bar)
-        const ctx = document.getElementById('financialChart').getContext('2d');
-        const financialChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($chartLabels) !!},
-                datasets: [
-                    {
-                        label: 'Pemasukan',
-                        data: {!! json_encode($chartPemasukan) !!},
-                        backgroundColor: '#10b981', // emerald color
-                        borderRadius: 6,
-                        borderWidth: 0,
-                    },
-                    {
-                        label: 'Pengeluaran',
-                        data: {!! json_encode($chartPengeluaran) !!},
-                        backgroundColor: '#f43f5e', // rose color
-                        borderRadius: 6,
-                        borderWidth: 0,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'Rp ' + value.toLocaleString('id-ID');
-                            },
-                            font: {
-                                family: 'Inter',
-                                size: 11
-                            }
-                        },
-                        grid: {
-                            color: '#f1f5f9'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                family: 'Inter',
-                                size: 11
-                            }
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($chartLabels) !!},
+            datasets: [
+                {
+                    label: 'Pemasukan',
+                    data: {!! json_encode($chartPemasukan) !!},
+                    backgroundColor: '#9fb2e9',
+                    borderRadius: 4,
+                    borderWidth: 0
                 },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            font: {
-                                family: 'Inter',
-                                weight: '600',
-                                size: 12
-                            },
-                            boxWidth: 15,
-                            boxHeight: 15,
-                            useBorderRadius: true,
-                            borderRadius: 4
-                        }
+                {
+                    label: 'Pengeluaran',
+                    data: {!! json_encode($chartPengeluaran) !!},
+                    backgroundColor: '#f3b7bd',
+                    borderRadius: 4,
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => 'Rp ' + Number(value).toLocaleString('id-ID'),
+                        font: { family: 'Inter', size: 11 }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += 'Rp ' + context.parsed.y.toLocaleString('id-ID');
-                                }
-                                return label;
-                            }
-                        }
+                    grid: { color: '#e5e7eb' }
+                },
+                x: {
+                    ticks: { font: { family: 'Inter', size: 11 } },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { family: 'Inter', weight: '700', size: 12 }, boxWidth: 12 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: context => `${context.dataset.label}: Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`
                     }
                 }
             }
-        });
+        }
+    });
 
-        // 2. Expense Category Chart (Doughnut)
-        @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
-        const ctxKategori = document.getElementById('categoryChart').getContext('2d');
-        
-        // Define color map to keep colors consistent for categories
-        const categoryColors = {
-            'Listrik': '#f59e0b',    // Gold
-            'Air': '#3b82f6',        // Blue
-            'Kebersihan': '#10b981',  // Emerald
-            'Perbaikan': '#8b5cf6',   // Violet
-            'Lainnya': '#64748b'     // Slate/Gray
-        };
-        
-        const labels = {!! json_encode($chartKategoriLabels) !!};
-        const backgroundColors = labels.map(label => categoryColors[label] || '#94a3b8');
-
-        const categoryChart = new Chart(ctxKategori, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: {!! json_encode($chartKategoriTotals) !!},
-                    backgroundColor: backgroundColors,
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            font: {
-                                family: 'Inter',
-                                size: 11
-                            },
-                            boxWidth: 12,
-                            useBorderRadius: true,
-                            borderRadius: 3
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.raw !== null) {
-                                    label += 'Rp ' + context.raw.toLocaleString('id-ID');
-                                }
-                                return label;
-                            }
-                        }
-                    }
+    @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {!! json_encode($chartKategoriLabels) !!},
+            datasets: [{
+                data: {!! json_encode($chartKategoriTotals) !!},
+                backgroundColor: ['#1e40af', '#0058be', '#93c5fd', '#f59e0b', '#dc2626', '#6b7280'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 }
                 },
-                cutout: '65%'
+                tooltip: {
+                    callbacks: {
+                        label: context => `${context.label}: Rp ${Number(context.parsed).toLocaleString('id-ID')}`
+                    }
+                }
+            }
+        }
+    });
+    @endif
+
+    function printCleanReport() {
+        const source = document.getElementById('printArea').cloneNode(true);
+        const canvases = document.querySelectorAll('#printArea canvas');
+        const clonedCanvases = source.querySelectorAll('canvas');
+
+        canvases.forEach((canvas, index) => {
+            const image = document.createElement('img');
+            image.src = canvas.toDataURL('image/png');
+            image.style.maxWidth = '100%';
+            image.style.height = 'auto';
+            if (clonedCanvases[index]) {
+                clonedCanvases[index].replaceWith(image);
             }
         });
-        @endif
-    });
+
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map(node => node.outerHTML)
+            .join('\n');
+
+        const printWindow = window.open('', '_blank', 'width=1100,height=800');
+        if (!printWindow) {
+            alert('Popup cetak diblokir browser. Izinkan popup untuk mencetak laporan.');
+            return;
+        }
+        printWindow.document.open();
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <title>Laporan Keuangan Kost AJ Lanraki</title>
+                ${styles}
+                <style>
+                    @page { size: A4; margin: 12mm; }
+                    body { background: #fff !important; padding: 0; }
+                    .print-document { max-width: 100%; }
+                    .content-card, .finance-panel { box-shadow: none !important; break-inside: avoid; }
+                    .d-print-block { display: block !important; }
+                    .no-print { display: none !important; }
+                </style>
+            </head>
+            <body>
+                <main class="print-document">${source.innerHTML}</main>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function(){ window.close(); }, 300);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
 </script>
-@endsection
+@endpush
