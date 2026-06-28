@@ -10,7 +10,7 @@
     </h5>
 
     @if($errors->any())
-    <div class="alert-modern" style="background: #fff1f2; color: #9d174d; margin-bottom: 20px;">
+    <div class="alert-modern alert-danger-modern">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <div>
             @foreach($errors->all() as $error)
@@ -23,18 +23,27 @@
     <form action="{{ route('pemasukan.update', $pemasukan) }}" method="POST">
         @csrf @method('PUT')
         <div class="mb-3">
+            <label class="form-label">Kategori Pemasukan</label>
+            <select name="kategori" id="kategoriPemasukan" class="form-select" required>
+                @foreach($kategoriPemasukan as $value => $label)
+                    <option value="{{ $value }}" {{ old('kategori', $pemasukan->kategori) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="mb-3" id="penghuniField">
             <label class="form-label">Penghuni Kost</label>
-            <select name="penghuni_id" class="form-select" required>
+            <select name="penghuni_id" id="penghuniSelect" class="form-select">
+                <option value="">-- Pilih Penghuni --</option>
                 @foreach($penghunis as $penghuni)
-                    <option value="{{ $penghuni->id }}" {{ old('penghuni_id', $pemasukan->penghuni_id) == $penghuni->id ? 'selected' : '' }}>
+                    <option value="{{ $penghuni->id }}" data-harga="{{ optional($penghuni->kamar)->harga ?? 0 }}" {{ old('penghuni_id', $pemasukan->penghuni_id) == $penghuni->id ? 'selected' : '' }}>
                         {{ $penghuni->nama }} (Kamar {{ $penghuni->kamar ? $penghuni->kamar->nomor_kamar : '-' }})
                     </option>
                 @endforeach
             </select>
         </div>
         <div class="mb-3">
-            <label class="form-label">Jumlah Pembayaran (Rp)</label>
-            <input type="number" name="jumlah" class="form-control" value="{{ old('jumlah', $pemasukan->jumlah) }}" required>
+            <label class="form-label" id="jumlahLabel">Jumlah Pembayaran (Rp)</label>
+            <input type="number" name="jumlah" id="jumlahPemasukan" class="form-control" value="{{ old('jumlah', $pemasukan->jumlah) }}" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Tanggal Pembayaran</label>
@@ -53,3 +62,31 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function syncPemasukanForm() {
+        const kategori = document.getElementById('kategoriPemasukan');
+        const penghuniField = document.getElementById('penghuniField');
+        const penghuniSelect = document.getElementById('penghuniSelect');
+        const jumlahLabel = document.getElementById('jumlahLabel');
+        if (!kategori || !penghuniField || !penghuniSelect) return;
+
+        if (kategori.value === 'pembayaran_kost') {
+            penghuniField.style.display = '';
+            penghuniSelect.required = true;
+            jumlahLabel.textContent = 'Jumlah Pembayaran (Rp)';
+        } else {
+            penghuniField.style.display = 'none';
+            penghuniSelect.required = false;
+            penghuniSelect.value = '';
+            jumlahLabel.textContent = 'Jumlah Pemasukan Lainnya (Rp)';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncPemasukanForm();
+        document.getElementById('kategoriPemasukan')?.addEventListener('change', syncPemasukanForm);
+    });
+</script>
+@endpush

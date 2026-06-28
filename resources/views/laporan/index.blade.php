@@ -102,8 +102,8 @@
         <div class="col-xl-6">
             <div class="content-card">
                 <div class="content-card-header">
-                    <h5><span class="material-symbols-outlined">payments</span> Pemasukan Terbaru</h5>
-                    <span class="badge-status badge-success">Income</span>
+                    <h5><span class="material-symbols-outlined">payments</span> Daftar Pemasukan</h5>
+                    <span class="badge-status badge-success">{{ $latestPemasukan->count() }} data</span>
                 </div>
                 <div class="content-card-body flush">
                     @if($latestPemasukan->count() > 0)
@@ -112,6 +112,7 @@
                             <thead>
                                 <tr>
                                     <th>Tanggal</th>
+                                    <th>Kategori</th>
                                     <th>Penghuni</th>
                                     <th>Keterangan</th>
                                     <th class="text-end">Nominal</th>
@@ -121,7 +122,12 @@
                             @foreach($latestPemasukan as $item)
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d M Y') }}</td>
-                                    <td>{{ optional($item->penghuni)->nama ?? 'Penghuni terhapus' }}</td>
+                                    <td>
+                                        <span class="badge-status {{ $item->kategori === 'pembayaran_kost' ? 'badge-blue' : 'badge-warning' }}">
+                                            {{ $item->kategori === 'pembayaran_kost' ? 'Pembayaran Kost' : 'Pemasukan Lainnya' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ optional($item->penghuni)->nama ?? 'Pemasukan lainnya' }}</td>
                                     <td>{{ $item->keterangan ?: 'Pembayaran kost' }}</td>
                                     <td class="text-end fw-bold text-success">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
                                 </tr>
@@ -143,8 +149,8 @@
         <div class="col-xl-6">
             <div class="content-card">
                 <div class="content-card-header">
-                    <h5><span class="material-symbols-outlined">account_balance_wallet</span> Pengeluaran Terbaru</h5>
-                    <span class="badge-status badge-danger">Expense</span>
+                    <h5><span class="material-symbols-outlined">account_balance_wallet</span> Daftar Pengeluaran</h5>
+                    <span class="badge-status badge-danger">{{ $latestPengeluaran->count() }} data</span>
                 </div>
                 <div class="content-card-body flush">
                     @if($latestPengeluaran->count() > 0)
@@ -307,6 +313,8 @@
                     body { background: #fff !important; padding: 0; }
                     .print-document { max-width: 100%; }
                     .content-card, .finance-panel { box-shadow: none !important; break-inside: avoid; }
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
                     .d-print-block { display: block !important; }
                     .no-print { display: none !important; }
                 </style>

@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 use App\Models\Pemasukan;
 use App\Models\Penghuni;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class PemasukanController extends Controller {
     public function index(){
-        $pemasukans = Pemasukan::with('penghuni')->latest()->get();
+        $pemasukans = Pemasukan::with('penghuni.kamar')->latest()->get();
         $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
+        $kategoriPemasukan = $this->kategoriPemasukan();
         $totalPemasukan = (float) Pemasukan::sum('jumlah');
         $pemasukanBulanIni = (float) Pemasukan::all()
             ->filter(fn ($item) => Carbon::parse($item->tanggal)->isSameMonth(Carbon::now()))
@@ -18,7 +20,9 @@ class PemasukanController extends Controller {
         $periodeTagihan = Carbon::now()->locale('id')->translatedFormat('F Y');
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
         $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
-        $penghuniSudahBayarIds = Pemasukan::whereBetween('tanggal', [$awalBulan, $akhirBulan])
+        $penghuniSudahBayarIds = Pemasukan::where('kategori', 'pembayaran_kost')
+            ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
+            ->whereNotNull('penghuni_id')
             ->pluck('penghuni_id')
             ->unique()
             ->all();
@@ -42,46 +46,102 @@ class PemasukanController extends Controller {
             });
 
         return view('pemasukan.index', compact(
-            'pemasukans', 'penghunis', 'totalPemasukan', 'pemasukanBulanIni',
+            'pemasukans', 'penghunis', 'kategoriPemasukan', 'totalPemasukan', 'pemasukanBulanIni',
             'penghuniBelumBayar', 'periodeTagihan'
         ));
     }
 
     public function create(){
         $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->get();
-        return view('pemasukan.create', compact('penghunis'));
+        $kategoriPemasukan = $this->kategoriPemasukan();
+        return view('pemasukan.create', compact('penghunis', 'kategoriPemasukan'));
     }
 
     public function store(Request $request){
-        $request->validate([
-            'penghuni_id' => 'required|exists:penghunis,id',
-            'jumlah' => 'required|numeric|min:0',
-            'tanggal' => 'required|date',
-            'keterangan' => 'nullable|string|max:255',
-        ]);
-        Pemasukan::create($request->all());
+        $data = $this->validatedData($request);
+        Pemasukan::create($data);
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil ditambahkan!');
     }
 
     public function edit(Pemasukan $pemasukan){
-        $penghunis = Penghuni::all();
-        return view('pemasukan.edit', compact('pemasukan', 'penghunis'));
+        $penghunis = Penghuni::with('kamar')->get();
+        $kategoriPemasukan = $this->kategoriPemasukan();
+        return view('pemasukan.edit', compact('pemasukan', 'penghunis', 'kategoriPemasukan'));
     }
 
     public function update(Request $request, Pemasukan $pemasukan){
-        $request->validate([
-            'penghuni_id' => 'required|exists:penghunis,id',
-            'jumlah' => 'required|numeric|min:0',
-            'tanggal' => 'required|date',
-            'keterangan' => 'nullable|string|max:255',
-        ]);
-        $pemasukan->update($request->all());
+        $data = $this->validatedData($request);
+        $pemasukan->update($data);
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil diperbarui!');
     }
 
     public function destroy(Pemasukan $pemasukan){
         $pemasukan->delete();
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil dihapus!');
+    }
+
+    private function validatedData(Request $request): array
+    {
+        $baseRules = [
+            'kategori' => 'required|in:pembayaran_kost,pemasukan_lainnya',
+            'tanggal' => 'required|date',
+            'keterangan' => 'nullable|string|max:255',
+        ];
+
+        $baseMessages = [
+            'kategori.required' => 'Kategori pemasukan wajib dipilih.',
+            'kategori.in' => 'Kategori pemasukan tidak valid.',
+            'tanggal.required' => 'Tanggal pemasukan wajib diisi.',
+            'tanggal.date' => 'Format tanggal tidak valid.',
+        ];
+
+        $data = $request->validate($baseRules, $baseMessages);
+
+        if ($request->kategori === 'pembayaran_kost') {
+            $paymentData = $request->validate([
+                'penghuni_id' => 'required|exists:penghunis,id',
+                'jumlah' => 'nullable|numeric|min:0',
+            ], [
+                'penghuni_id.required' => 'Penghuni wajib dipilih untuk kategori pembayaran kost.',
+                'penghuni_id.exists' => 'Data penghuni tidak ditemukan.',
+                'jumlah.numeric' => 'Jumlah pemasukan harus berupa angka.',
+                'jumlah.min' => 'Jumlah pemasukan tidak boleh bernilai negatif.',
+            ]);
+
+            $penghuni = Penghuni::with('kamar')->findOrFail($paymentData['penghuni_id']);
+            $data['penghuni_id'] = $paymentData['penghuni_id'];
+            $data['jumlah'] = $request->filled('jumlah')
+                ? (float) $paymentData['jumlah']
+                : (float) optional($penghuni->kamar)->harga;
+
+            if (! $request->filled('keterangan')) {
+                $periode = Carbon::parse($data['tanggal'])->locale('id')->translatedFormat('F Y');
+                $data['keterangan'] = 'Pembayaran kost bulan ' . $periode;
+            }
+
+            return $data;
+        }
+
+        $otherIncomeData = $request->validate([
+            'jumlah' => 'required|numeric|min:0',
+        ], [
+            'jumlah.required' => 'Jumlah pemasukan lainnya wajib diisi.',
+            'jumlah.numeric' => 'Jumlah pemasukan harus berupa angka.',
+            'jumlah.min' => 'Jumlah pemasukan tidak boleh bernilai negatif.',
+        ]);
+
+        $data['penghuni_id'] = null;
+        $data['jumlah'] = (float) $otherIncomeData['jumlah'];
+
+        return $data;
+    }
+
+    private function kategoriPemasukan(): array
+    {
+        return [
+            'pembayaran_kost' => 'Pembayaran Kost',
+            'pemasukan_lainnya' => 'Pemasukan Lainnya',
+        ];
     }
 
     private function normalizeWhatsappNumber(?string $phone): ?string

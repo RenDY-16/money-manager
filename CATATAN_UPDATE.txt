@@ -1,23 +1,30 @@
 UPDATE KOST AJ LANRAKI
 
+Isi perubahan:
+1. Tombol Form Halaman Penuh di menu Pemasukan dan Pengeluaran dihapus.
+2. Menu Pemasukan ditambah kategori:
+   - Pembayaran Kost
+   - Pemasukan Lainnya
+3. Saat kategori Pembayaran Kost dipilih, jumlah pembayaran otomatis mengikuti harga kamar penghuni yang dipilih.
+4. Kategori Pemasukan Lainnya tidak wajib memilih penghuni.
+5. Menu Pengeluaran ditambah tombol + Tambah kategori agar admin dapat membuat kategori pengeluaran sendiri.
+6. Kategori pengeluaran custom tersimpan melalui data transaksi dan akan muncul lagi di daftar kategori.
+7. Filter tahun laporan dibuat mendukung tahun berjalan sampai 10 tahun ke depan.
+8. Laporan keuangan menampilkan semua data pemasukan dan pengeluaran sesuai filter, bukan hanya 5 data terbaru.
+9. Cetak laporan akan mencetak seluruh data yang sedang tampil di laporan.
+10. Seeder tetap berisi 18 kamar dan 15 penghuni, ditambah data pemasukan lainnya.
+
 Cara pasang:
-1. Ekstrak ZIP ini.
-2. Copy folder app, database, resources, dan routes ke folder project utama.
-3. Pilih Replace / Overwrite jika diminta.
-4. Jalankan:
-   php artisan optimize:clear
-   php artisan migrate:fresh --seed
-   php artisan serve
+- Ekstrak ZIP ini.
+- Copy folder app, database, dan resources ke project utama.
+- Pilih Replace atau Overwrite.
+- Jalankan:
+  php artisan optimize:clear
+  php artisan migrate:fresh --seed
+  php artisan serve
 
-Akun test admin:
-Email    : admin@kostaj.com
-Password : admin123
-
-Isi update:
-- Tema gelap diperbaiki agar input, select, tabel, card, badge, dan teks lebih terbaca.
-- Landing page tidak lagi menampilkan pemasukan dan saldo.
-- Logout memakai route GET tambahan agar tidak mudah muncul Page Expired.
-- Pemasukan memiliki fitur pengingat WhatsApp untuk penghuni aktif yang belum membayar bulan berjalan.
-- Seeder diperbanyak menjadi 18 kamar, 15 penghuni, pemasukan bulan berjalan dan bulan sebelumnya, serta 10 pengeluaran.
-- Nomor telepon penghuni divalidasi hanya angka. Jika admin memasukkan huruf/simbol, sistem menampilkan alert dan validasi error.
-- File laporan tetap memakai cetak bersih. Browser tidak menyediakan API untuk mematikan checkbox Header and footer secara otomatis, jadi opsi itu tetap perlu dimatikan manual dari dialog print bila browser masih menampilkannya.
+Catatan penting:
+- Karena struktur tabel pemasukan berubah, migrate:fresh --seed perlu dijalankan agar kolom kategori dan penghuni_id nullable terbentuk.
+- Akun admin test tetap:
+  Email    : admin@kostaj.com
+  Password : admin123

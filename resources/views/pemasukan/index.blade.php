@@ -7,12 +7,8 @@
 <div class="page-heading">
     <div>
         <h1>Manajemen Pemasukan</h1>
-        <p>Catat pembayaran penghuni dan pantau pemasukan yang sudah masuk.</p>
+        <p>Catat pembayaran penghuni, pemasukan lain, dan pantau uang masuk.</p>
     </div>
-    <a href="{{ route('pemasukan.create') }}" class="btn-secondary-custom">
-        <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span>
-        Form Halaman Penuh
-    </a>
 </div>
 
 <div class="summary-strip mb-4">
@@ -100,7 +96,7 @@
     <div class="col-xl-4">
         <div class="content-card">
             <div class="content-card-header">
-                <h5><span class="material-symbols-outlined">add_card</span> Catat Pembayaran</h5>
+                <h5><span class="material-symbols-outlined">add_card</span> Catat Pemasukan</h5>
             </div>
             <div class="content-card-body">
                 @if($errors->any())
@@ -114,38 +110,47 @@
                     </div>
                 @endif
 
-                <form action="{{ route('pemasukan.store') }}" method="POST">
+                <form action="{{ route('pemasukan.store') }}" method="POST" id="pemasukanForm">
                     @csrf
                     <div class="mb-3">
+                        <label class="form-label">Kategori Pemasukan</label>
+                        <select name="kategori" id="kategoriPemasukan" class="form-select" required>
+                            @foreach($kategoriPemasukan as $value => $label)
+                                <option value="{{ $value }}" {{ old('kategori', 'pembayaran_kost') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3" id="penghuniField">
                         <label class="form-label">Penghuni</label>
-                        <select name="penghuni_id" class="form-select" required>
+                        <select name="penghuni_id" id="penghuniSelect" class="form-select">
                             <option value="">Pilih penghuni</option>
                             @foreach($penghunis as $penghuni)
-                                <option value="{{ $penghuni->id }}" {{ old('penghuni_id') == $penghuni->id ? 'selected' : '' }}>
+                                <option value="{{ $penghuni->id }}" data-harga="{{ optional($penghuni->kamar)->harga ?? 0 }}" {{ old('penghuni_id') == $penghuni->id ? 'selected' : '' }}>
                                     {{ $penghuni->nama }} @if($penghuni->kamar) - Kamar {{ $penghuni->kamar->nomor_kamar }} @endif
                                 </option>
                             @endforeach
                         </select>
+                        @if($penghunis->isEmpty())
+                            <div class="form-text text-danger">Belum ada penghuni aktif untuk kategori pembayaran kost.</div>
+                        @endif
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" id="jumlahLabel">Jumlah Pembayaran</label>
+                        <input type="number" name="jumlah" id="jumlahPemasukan" class="form-control" value="{{ old('jumlah') }}" placeholder="Pilih penghuni agar jumlah terisi otomatis" required>
+                        <div class="form-text text-muted" id="jumlahHelp">Untuk pembayaran kost, jumlah akan mengikuti harga kamar penghuni yang dipilih.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tanggal</label>
                         <input type="date" name="tanggal" class="form-control" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah Pembayaran</label>
-                        <input type="number" name="jumlah" class="form-control" value="{{ old('jumlah') }}" placeholder="Contoh: 850000" required>
-                    </div>
                     <div class="mb-4">
                         <label class="form-label">Keterangan</label>
-                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Pembayaran bulan ini">{{ old('keterangan') }}</textarea>
+                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Pembayaran bulan ini atau pemasukan laundry">{{ old('keterangan') }}</textarea>
                     </div>
-                    <button type="submit" class="btn-primary-custom w-100" {{ $penghunis->isEmpty() ? 'disabled' : '' }}>
+                    <button type="submit" class="btn-primary-custom w-100">
                         <span class="material-symbols-outlined" style="font-size:18px;">save</span>
                         Simpan Transaksi
                     </button>
-                    @if($penghunis->isEmpty())
-                        <div class="text-danger small fw-semibold mt-3">Tidak ada penghuni aktif. Tambahkan penghuni terlebih dahulu.</div>
-                    @endif
                 </form>
             </div>
         </div>
@@ -164,6 +169,7 @@
                             <thead>
                                 <tr>
                                     <th>Tanggal</th>
+                                    <th>Kategori</th>
                                     <th>Penghuni</th>
                                     <th class="text-end">Jumlah</th>
                                     <th>Keterangan</th>
@@ -176,9 +182,14 @@
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($pemasukan->tanggal)->locale('id')->translatedFormat('d M Y') }}</td>
                                     <td>
+                                        <span class="badge-status {{ $pemasukan->kategori === 'pembayaran_kost' ? 'badge-blue' : 'badge-warning' }}">
+                                            {{ $kategoriPemasukan[$pemasukan->kategori] ?? ucfirst(str_replace('_', ' ', $pemasukan->kategori)) }}
+                                        </span>
+                                    </td>
+                                    <td>
                                         <div class="table-title">
-                                            <span class="row-avatar">{{ strtoupper(substr(optional($pemasukan->penghuni)->nama ?? 'PT', 0, 2)) }}</span>
-                                            {{ optional($pemasukan->penghuni)->nama ?? 'Penghuni terhapus' }}
+                                            <span class="row-avatar">{{ strtoupper(substr(optional($pemasukan->penghuni)->nama ?? 'PL', 0, 2)) }}</span>
+                                            {{ optional($pemasukan->penghuni)->nama ?? 'Pemasukan lainnya' }}
                                         </div>
                                     </td>
                                     <td class="text-end fw-bold text-success">Rp {{ number_format($pemasukan->jumlah, 0, ',', '.') }}</td>
@@ -206,7 +217,7 @@
                     <div class="empty-state">
                         <span class="material-symbols-outlined">payments</span>
                         <h6>Belum ada pemasukan</h6>
-                        <p>Gunakan form di sebelah kiri untuk mencatat pembayaran pertama.</p>
+                        <p>Gunakan form di sebelah kiri untuk mencatat pemasukan pertama.</p>
                     </div>
                 @endif
             </div>
@@ -214,3 +225,44 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function syncPemasukanForm() {
+        const kategori = document.getElementById('kategoriPemasukan');
+        const penghuniField = document.getElementById('penghuniField');
+        const penghuniSelect = document.getElementById('penghuniSelect');
+        const jumlahInput = document.getElementById('jumlahPemasukan');
+        const jumlahLabel = document.getElementById('jumlahLabel');
+        const jumlahHelp = document.getElementById('jumlahHelp');
+
+        if (!kategori || !penghuniField || !penghuniSelect || !jumlahInput) return;
+
+        if (kategori.value === 'pembayaran_kost') {
+            penghuniField.style.display = '';
+            penghuniSelect.required = true;
+            jumlahLabel.textContent = 'Jumlah Pembayaran';
+            jumlahInput.placeholder = 'Pilih penghuni agar jumlah terisi otomatis';
+            jumlahHelp.textContent = 'Untuk pembayaran kost, jumlah akan mengikuti harga kamar penghuni yang dipilih.';
+            const selected = penghuniSelect.options[penghuniSelect.selectedIndex];
+            const harga = selected ? selected.dataset.harga : '';
+            if (harga && Number(harga) > 0) {
+                jumlahInput.value = Math.round(Number(harga));
+            }
+        } else {
+            penghuniField.style.display = 'none';
+            penghuniSelect.required = false;
+            penghuniSelect.value = '';
+            jumlahLabel.textContent = 'Jumlah Pemasukan Lainnya';
+            jumlahInput.placeholder = 'Contoh: 250000';
+            jumlahHelp.textContent = 'Isi manual untuk pemasukan selain pembayaran kost.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncPemasukanForm();
+        document.getElementById('kategoriPemasukan')?.addEventListener('change', syncPemasukanForm);
+        document.getElementById('penghuniSelect')?.addEventListener('change', syncPemasukanForm);
+    });
+</script>
+@endpush

@@ -73,6 +73,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($penghunis as $index => $penghuni) {
             Pemasukan::create([
+                'kategori' => 'pembayaran_kost',
                 'penghuni_id' => $penghuni->id,
                 'jumlah' => optional($penghuni->kamar)->harga ?? 0,
                 'tanggal' => $bulanLalu->copy()->addDays(($index % 25) + 1)->toDateString(),
@@ -82,10 +83,28 @@ class DatabaseSeeder extends Seeder
 
         foreach ($penghunis->take(9) as $index => $penghuni) {
             Pemasukan::create([
+                'kategori' => 'pembayaran_kost',
                 'penghuni_id' => $penghuni->id,
                 'jumlah' => optional($penghuni->kamar)->harga ?? 0,
                 'tanggal' => $bulanIni->copy()->addDays($index + 1)->toDateString(),
                 'keterangan' => 'Bayar kost bulan ' . $bulanIni->locale('id')->translatedFormat('F Y'),
+            ]);
+        }
+
+
+        $pemasukanLainnya = [
+            [350000, 'Pemasukan laundry penghuni', 7],
+            [150000, 'Denda keterlambatan pembayaran', 11],
+            [500000, 'Sewa parkir motor bulanan', 15],
+        ];
+
+        foreach ($pemasukanLainnya as $row) {
+            Pemasukan::create([
+                'kategori' => 'pemasukan_lainnya',
+                'penghuni_id' => null,
+                'jumlah' => $row[0],
+                'tanggal' => $bulanIni->copy()->addDays($row[2])->toDateString(),
+                'keterangan' => $row[1],
             ]);
         }
 

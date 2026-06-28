@@ -39,7 +39,7 @@ class LaporanController extends Controller
             $selectedType = 'semua';
         }
 
-        $allPemasukan = Pemasukan::with('penghuni')
+        $allPemasukan = Pemasukan::with('penghuni.kamar')
             ->whereYear('tanggal', $selectedYear)
             ->get();
 
@@ -96,12 +96,10 @@ class LaporanController extends Controller
 
         $latestPemasukan = $filteredPemasukan
             ->sortByDesc('tanggal')
-            ->take(5)
             ->values();
 
         $latestPengeluaran = $filteredPengeluaran
             ->sortByDesc('tanggal')
-            ->take(5)
             ->values();
 
         $filterLabel = $this->filterLabel($months, $selectedMonth, $selectedYear, $selectedType);
@@ -127,18 +125,16 @@ class LaporanController extends Controller
 
     private function availableYears(): array
     {
-        $years = collect()
-            ->merge(Pemasukan::pluck('tanggal'))
-            ->merge(Pengeluaran::pluck('tanggal'))
+        $currentYear = Carbon::now()->year;
+        $yearRange = range($currentYear - 1, $currentYear + 10);
+
+        $years = collect($yearRange)
+            ->merge(Pemasukan::pluck('tanggal')->map(fn ($date) => Carbon::parse($date)->year))
+            ->merge(Pengeluaran::pluck('tanggal')->map(fn ($date) => Carbon::parse($date)->year))
             ->filter()
-            ->map(fn ($date) => Carbon::parse($date)->year)
             ->unique()
             ->values()
             ->all();
-
-        if (empty($years)) {
-            $years[] = Carbon::now()->year;
-        }
 
         rsort($years);
 

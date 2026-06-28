@@ -9,10 +9,6 @@
         <h1>Manajemen Pengeluaran</h1>
         <p>Rekam biaya operasional agar laporan keuangan tetap rapi dan akurat.</p>
     </div>
-    <a href="{{ route('pengeluaran.create') }}" class="btn-secondary-custom">
-        <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span>
-        Form Halaman Penuh
-    </a>
 </div>
 
 <div class="summary-strip mb-4">
@@ -38,7 +34,7 @@
             </div>
             <div class="content-card-body">
                 @if($errors->any())
-                    <div class="alert-modern" style="background: var(--danger-soft); color: #991b1b; border-color: #fecaca;">
+                    <div class="alert-modern alert-danger-modern">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>
                             @foreach($errors->all() as $error)
@@ -55,13 +51,23 @@
                         <input type="date" name="tanggal" class="form-control" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Kategori</label>
-                        <select name="kategori" class="form-select" required>
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                            <label class="form-label mb-0">Kategori</label>
+                            <button type="button" class="btn btn-sm btn-link p-0 fw-bold" id="btnKategoriBaru" style="text-decoration:none;">
+                                + Tambah kategori
+                            </button>
+                        </div>
+                        <select name="kategori" id="kategoriPengeluaran" class="form-select" required>
                             <option value="">Pilih kategori</option>
                             @foreach($kategoriList as $kategori)
                                 <option value="{{ $kategori }}" {{ old('kategori') == $kategori ? 'selected' : '' }}>{{ $kategori }}</option>
                             @endforeach
+                            <option value="__custom__" {{ old('kategori') === '__custom__' ? 'selected' : '' }}>+ Kategori baru</option>
                         </select>
+                    </div>
+                    <div class="mb-3" id="kategoriBaruWrap" style="display:none;">
+                        <label class="form-label">Nama Kategori Baru</label>
+                        <input type="text" name="kategori_baru" id="kategoriBaruInput" class="form-control" value="{{ old('kategori_baru') }}" placeholder="Contoh: Renovasi, Pajak, Keamanan">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Jumlah Pengeluaran</label>
@@ -138,3 +144,30 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function syncKategoriPengeluaran() {
+        const select = document.getElementById('kategoriPengeluaran');
+        const wrap = document.getElementById('kategoriBaruWrap');
+        const input = document.getElementById('kategoriBaruInput');
+        if (!select || !wrap || !input) return;
+
+        const useCustom = select.value === '__custom__';
+        wrap.style.display = useCustom ? '' : 'none';
+        input.required = useCustom;
+        if (useCustom) input.focus();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const select = document.getElementById('kategoriPengeluaran');
+        const button = document.getElementById('btnKategoriBaru');
+        syncKategoriPengeluaran();
+        select?.addEventListener('change', syncKategoriPengeluaran);
+        button?.addEventListener('click', () => {
+            select.value = '__custom__';
+            syncKategoriPengeluaran();
+        });
+    });
+</script>
+@endpush

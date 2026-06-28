@@ -44,11 +44,15 @@ class DashboardController extends Controller {
         }
 
         $latestPemasukan = Pemasukan::with('penghuni')->latest()->take(5)->get()->map(function ($item) {
+            $nama = $item->kategori === 'pemasukan_lainnya'
+                ? 'Pemasukan lainnya'
+                : (optional($item->penghuni)->nama ?? 'Penghuni terhapus');
+
             return [
                 'tanggal' => $item->tanggal,
                 'jenis' => 'Pemasukan',
-                'nama' => optional($item->penghuni)->nama ?? 'Penghuni terhapus',
-                'keterangan' => $item->keterangan ?: 'Pembayaran kost',
+                'nama' => $nama,
+                'keterangan' => $item->keterangan ?: ($item->kategori === 'pemasukan_lainnya' ? 'Pemasukan lainnya' : 'Pembayaran kost'),
                 'jumlah' => (float) $item->jumlah,
                 'status' => 'Berhasil',
             ];
