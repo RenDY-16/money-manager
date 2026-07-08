@@ -13,6 +13,14 @@
     @stack('styles')
 </head>
 <body data-theme="light" data-density="comfortable">
+<script>
+    (function() {
+        const theme = localStorage.getItem('kostAjTheme') || 'light';
+        const density = localStorage.getItem('kostAjDensity') || 'comfortable';
+        document.body.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-density', density);
+    })();
+</script>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <aside class="sidebar" id="sidebar">

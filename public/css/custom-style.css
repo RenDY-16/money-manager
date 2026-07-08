@@ -491,22 +491,21 @@
         .form-card {
             background: var(--surface-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
+            border-radius: 10px;
+            box-shadow: none;
         }
 
         .stat-card,
         .metric-card {
             padding: 20px;
             min-height: 132px;
-            transition: transform .2s ease, box-shadow .2s ease;
+            transition: border-color .15s ease;
         }
 
         .stat-card:hover,
         .metric-card:hover,
         .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            border-color: var(--border-strong);
         }
 
         .metric-top {
@@ -689,20 +688,19 @@
             min-height: 40px;
             padding: 10px 16px;
             border: 0;
-            border-radius: 4px;
+            border-radius: 6px;
             background: var(--primary-container);
             color: #fff;
             font-size: 13px;
             font-weight: 800;
             line-height: 1;
-            transition: transform .18s ease, background .18s ease;
+            transition: background .15s ease;
         }
 
         .btn-primary-custom:hover,
         .btn-submit:hover {
             background: var(--primary);
             color: #fff;
-            transform: translateY(-1px);
         }
 
         .btn-cancel,
@@ -714,17 +712,19 @@
             min-height: 40px;
             padding: 10px 16px;
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 6px;
             background: var(--surface-card);
             color: var(--primary);
             font-size: 13px;
             font-weight: 800;
             line-height: 1;
+            transition: background .15s ease, border-color .15s ease;
         }
 
         .btn-cancel:hover,
         .btn-secondary-custom:hover {
             background: var(--surface-low);
+            border-color: var(--border-strong);
             color: var(--primary);
         }
 
