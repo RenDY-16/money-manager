@@ -11,8 +11,8 @@
 <div class="metric-grid metric-grid-5">
     <div class="metric-card card-hover">
         <div class="metric-top">
-            <span class="material-symbols-outlined metric-icon success">trending_up</span>
-            <span class="metric-trend">+12%</span>
+            <span class="material-symbols-outlined metric-icon {{ $trendPemasukan >= 0 ? 'success' : 'danger' }}">{{ $trendPemasukan >= 0 ? 'trending_up' : 'trending_down' }}</span>
+            <span class="metric-trend" style="color:{{ $trendPemasukan >= 0 ? 'var(--success)' : 'var(--danger)' }}">{{ ($trendPemasukan >= 0 ? '+' : '') . number_format($trendPemasukan, 1) }}%</span>
         </div>
         <div class="metric-label">Total Pemasukan</div>
         <div class="metric-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
@@ -21,8 +21,8 @@
 
     <div class="metric-card card-hover">
         <div class="metric-top">
-            <span class="material-symbols-outlined metric-icon danger">trending_down</span>
-            <span class="metric-trend" style="color:var(--danger);">-4%</span>
+            <span class="material-symbols-outlined metric-icon {{ $trendPengeluaran <= 0 ? 'success' : 'danger' }}">{{ $trendPengeluaran <= 0 ? 'trending_down' : 'trending_up' }}</span>
+            <span class="metric-trend" style="color:{{ $trendPengeluaran <= 0 ? 'var(--success)' : 'var(--danger)' }}">{{ ($trendPengeluaran >= 0 ? '+' : '') . number_format($trendPengeluaran, 1) }}%</span>
         </div>
         <div class="metric-label">Total Pengeluaran</div>
         <div class="metric-value">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>

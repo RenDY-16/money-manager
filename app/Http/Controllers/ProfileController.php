@@ -11,7 +11,8 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        return view('profil.index');
+        $activities = \App\Models\ActivityLog::with('user')->latest()->take(10)->get();
+        return view('profil.index', compact('activities'));
     }
 
     public function updateProfile(Request $request)
@@ -50,6 +51,8 @@ class ProfileController extends Controller
 
         $user->update($data);
 
+        \App\Models\ActivityLog::log('Update Profil', "Memperbarui nama/email profil admin.");
+
         return redirect()->route('profil.index')->with('success', 'Profil admin berhasil diperbarui.');
     }
 
@@ -74,6 +77,8 @@ class ProfileController extends Controller
         $user->update([
             'password' => Hash::make($request->password),
         ]);
+
+        \App\Models\ActivityLog::log('Ganti Password', "Mengganti password akun admin.");
 
         return redirect()->route('profil.index')->with('success', 'Password admin berhasil diganti.');
     }

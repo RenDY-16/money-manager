@@ -72,7 +72,18 @@
                                     @endif
                                 </td>
                                 <td class="text-end fw-bold">Rp {{ number_format(optional($penghuni->kamar)->harga ?? 0, 0, ',', '.') }}</td>
-                                <td><span class="badge-status badge-warning">Belum Lunas</span></td>
+                                <td>
+                                    <span class="badge-status badge-warning">Belum Lunas</span>
+                                    <div class="cell-muted mt-1 small">
+                                        @if($penghuni->hari_jatuh_tempo > 0)
+                                            <span class="text-primary fw-bold">{{ $penghuni->hari_jatuh_tempo }} hari lagi</span>
+                                        @elseif($penghuni->hari_jatuh_tempo === 0)
+                                            <span class="text-warning fw-bold">Hari ini</span>
+                                        @else
+                                            <span class="text-danger fw-bold">Lewat {{ abs($penghuni->hari_jatuh_tempo) }} hari</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td style="min-width:260px; max-width:360px;">
                                     <div class="small text-muted">{{ $penghuni->wa_message }}</div>
                                 </td>
@@ -159,7 +170,7 @@
         <div class="content-card">
             <div class="content-card-header">
                 <h5><span class="material-symbols-outlined">receipt_long</span> Riwayat Pemasukan</h5>
-                <span class="badge-status badge-blue">{{ $pemasukans->count() }} transaksi</span>
+                <span class="badge-status badge-blue">Menampilkan {{ $pemasukans->firstItem() ?? 0 }}-{{ $pemasukans->lastItem() ?? 0 }} dari {{ $pemasukans->total() }} transaksi</span>
             </div>
             <form method="GET" action="{{ route('pemasukan.index') }}" class="filter-box">
                 <input class="compact-input" type="search" name="search" value="{{ request('search') }}" placeholder="Cari penghuni/keterangan...">
@@ -216,7 +227,10 @@
                                     <td>{{ $pemasukan->keterangan ?: '-' }}</td>
                                     <td><span class="badge-status badge-success">Lunas/Tercatat</span></td>
                                     <td>
-                                        <div class="action-buttons justify-content-end">
+                                        <div class="action-buttons justify-content-end d-flex gap-1">
+                                            <a href="{{ route('pemasukan.kwitansi', $pemasukan) }}" class="btn-action btn-edit" title="Cetak Kwitansi" target="_blank">
+                                                <span class="material-symbols-outlined" style="font-size:18px;">print</span>
+                                            </a>
                                             <a href="{{ route('pemasukan.edit', $pemasukan) }}" class="btn-action btn-edit" title="Edit">
                                                 <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                             </a>
@@ -232,6 +246,14 @@
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+                    <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
+                        <div class="text-muted small fw-semibold">
+                            Menampilkan {{ $pemasukans->firstItem() ?? 0 }}-{{ $pemasukans->lastItem() ?? 0 }} dari {{ $pemasukans->total() }} transaksi
+                        </div>
+                        <div class="pagination-custom-wrapper">
+                            {{ $pemasukans->links() }}
+                        </div>
                     </div>
                 @else
                     <div class="empty-state">

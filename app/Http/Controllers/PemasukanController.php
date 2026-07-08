@@ -1,74 +1,64 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Pemasukan;
 use App\Models\Penghuni;
+use App\Models\ActivityLog;
+use App\Services\TenantService;
+use App\Services\FinanceService;
+use App\Http\Requests\StorePemasukanRequest;
+use App\Http\Requests\UpdatePemasukanRequest;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class PemasukanController extends Controller {
-    public function index(Request $request){
+class PemasukanController extends Controller
+{
+    protected TenantService $tenantService;
+    protected FinanceService $financeService;
+
+    public function __construct(TenantService $tenantService, FinanceService $financeService)
+    {
+        $this->tenantService = $tenantService;
+        $this->financeService = $financeService;
+    }
+
+    public function index(Request $request)
+    {
         $query = Pemasukan::with('penghuni.kamar');
 
         if ($request->filled('search')) {
-            $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('keterangan', 'like', '%' . $search . '%')
-                    ->orWhereHas('penghuni', fn ($tenant) => $tenant->where('nama', 'like', '%' . $search . '%'));
-            });
+            $query->search(trim($request->search));
         }
 
-        if ($request->filled('kategori') && in_array($request->kategori, ['pembayaran_kost', 'pemasukan_lainnya'], true)) {
-            $query->where('kategori', $request->kategori);
+        if ($request->filled('kategori')) {
+            $query->kategori($request->kategori);
         }
 
-        if ($request->filled('tanggal_mulai')) {
-            $query->whereDate('tanggal', '>=', $request->tanggal_mulai);
-        }
+        $query->dateRange($request->tanggal_mulai, $request->tanggal_selesai);
 
-        if ($request->filled('tanggal_selesai')) {
-            $query->whereDate('tanggal', '<=', $request->tanggal_selesai);
-        }
+        // Paginate history list
+        $pemasukans = $query->orderByDesc('tanggal')->orderByDesc('id')->paginate(10)->withQueryString();
 
-        $pemasukans = $query->orderByDesc('tanggal')->orderByDesc('id')->get();
-        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->orderBy('nama')->get();
+        // Data for form dropdowns
+        $penghunis = Penghuni::active()->with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
-        $totalPemasukan = (float) Pemasukan::sum('jumlah');
-        $pemasukanBulanIni = (float) Pemasukan::whereBetween('tanggal', [
-            Carbon::now()->startOfMonth()->toDateString(),
-            Carbon::now()->endOfMonth()->toDateString(),
-        ])->sum('jumlah');
 
-        $periodeTagihan = Carbon::now()->locale('id')->translatedFormat('F Y');
+        // Dynamic Finance Stats using service
+        $financeSummary = $this->financeService->getSummary();
+        $totalPemasukan = $financeSummary['totalPemasukan'];
+
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
         $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
-        $penghuniSudahBayarIds = Pemasukan::where('kategori', 'pembayaran_kost')
-            ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
-            ->whereNotNull('penghuni_id')
-            ->pluck('penghuni_id')
-            ->unique()
-            ->all();
+        $pemasukanBulanIni = (float) Pemasukan::whereBetween('tanggal', [$awalBulan, $akhirBulan])->sum('jumlah');
 
-        $penghuniBelumBayar = Penghuni::whereNull('tanggal_keluar')
-            ->whereNotIn('id', $penghuniSudahBayarIds)
-            ->with('kamar')
-            ->orderBy('nama')
-            ->get()
-            ->map(function ($penghuni) use ($periodeTagihan) {
-                $nomorKamar = optional($penghuni->kamar)->nomor_kamar ?: '-';
-                $hargaKamar = (float) optional($penghuni->kamar)->harga;
-                $message = "Halo {$penghuni->nama}, kami ingin mengingatkan pembayaran kost untuk bulan {$periodeTagihan}. Mohon melakukan pembayaran kamar {$nomorKamar} sebesar Rp " . number_format($hargaKamar, 0, ',', '.') . ". Jika sudah membayar, abaikan pesan ini. Terima kasih.";
+        $periodeTagihan = Carbon::now()->locale('id')->translatedFormat('F Y');
 
-                $penghuni->wa_number = $this->normalizeWhatsappNumber($penghuni->no_hp);
-                $penghuni->wa_message = $message;
-                $penghuni->wa_link = $penghuni->wa_number
-                    ? 'https://wa.me/' . $penghuni->wa_number . '?text=' . rawurlencode($message)
-                    : null;
+        // Dynamic Unpaid Reminders using service
+        $penghuniBelumBayar = $this->tenantService->getBelumBayarPenghunis($periodeTagihan);
 
-                return $penghuni;
-            });
-
-        $jumlahPenghuniAktif = Penghuni::whereNull('tanggal_keluar')->count();
+        $jumlahPenghuniAktif = Penghuni::active()->count();
+        $penghuniSudahBayarIds = $this->tenantService->getLunasPenghuniIds($awalBulan, $akhirBulan);
         $jumlahLunas = count($penghuniSudahBayarIds);
         $jumlahBelumLunas = $penghuniBelumBayar->count();
 
@@ -78,89 +68,86 @@ class PemasukanController extends Controller {
         ));
     }
 
-    public function create(){
-        $penghunis = Penghuni::whereNull('tanggal_keluar')->with('kamar')->orderBy('nama')->get();
+    public function create()
+    {
+        $penghunis = Penghuni::active()->with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
         return view('pemasukan.create', compact('penghunis', 'kategoriPemasukan'));
     }
 
-    public function store(Request $request){
-        $data = $this->validatedData($request);
-        Pemasukan::create($data);
+    public function store(StorePemasukanRequest $request)
+    {
+        $data = $request->validated();
+
+        // Populate business defaults
+        if ($data['kategori'] === 'pembayaran_kost') {
+            $penghuni = Penghuni::with('kamar')->findOrFail($data['penghuni_id']);
+            if (empty($data['jumlah'])) {
+                $data['jumlah'] = (float) optional($penghuni->kamar)->harga;
+            }
+            if (empty($data['keterangan'])) {
+                $periode = Carbon::parse($data['tanggal'])->locale('id')->translatedFormat('F Y');
+                $data['keterangan'] = 'Pembayaran kost bulan ' . $periode;
+            }
+        } else {
+            $data['penghuni_id'] = null;
+        }
+
+        $pemasukan = Pemasukan::create($data);
+
+        $label = $pemasukan->kategori === 'pembayaran_kost'
+            ? "Mencatat pembayaran kost penghuni: " . optional($pemasukan->penghuni)->nama
+            : "Mencatat pemasukan lainnya";
+        ActivityLog::log('Catat Pemasukan', $label . " sebesar " . $pemasukan->formatted_jumlah);
+
         return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil ditambahkan!');
     }
 
-    public function edit(Pemasukan $pemasukan){
-        $penghunis = Penghuni::with('kamar')->orderBy('nama')->get();
+    public function edit(Pemasukan $pemasukan)
+    {
+        $penghunis = Penghuni::active()->with('kamar')->orderBy('nama')->get();
         $kategoriPemasukan = $this->kategoriPemasukan();
         return view('pemasukan.edit', compact('pemasukan', 'penghunis', 'kategoriPemasukan'));
     }
 
-    public function update(Request $request, Pemasukan $pemasukan){
-        $data = $this->validatedData($request);
-        $pemasukan->update($data);
-        return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil diperbarui!');
-    }
-
-    public function destroy(Pemasukan $pemasukan){
-        $pemasukan->delete();
-        return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil dihapus!');
-    }
-
-    private function validatedData(Request $request): array
+    public function update(UpdatePemasukanRequest $request, Pemasukan $pemasukan)
     {
-        $baseRules = [
-            'kategori' => 'required|in:pembayaran_kost,pemasukan_lainnya',
-            'tanggal' => 'required|date',
-            'keterangan' => 'nullable|string|max:255',
-        ];
+        $data = $request->validated();
 
-        $baseMessages = [
-            'kategori.required' => 'Kategori pemasukan wajib dipilih.',
-            'kategori.in' => 'Kategori pemasukan tidak valid.',
-            'tanggal.required' => 'Tanggal pemasukan wajib diisi.',
-            'tanggal.date' => 'Format tanggal tidak valid.',
-        ];
-
-        $data = $request->validate($baseRules, $baseMessages);
-
-        if ($request->kategori === 'pembayaran_kost') {
-            $paymentData = $request->validate([
-                'penghuni_id' => 'required|exists:penghunis,id',
-                'jumlah' => 'nullable|numeric|min:0',
-            ], [
-                'penghuni_id.required' => 'Penghuni wajib dipilih untuk kategori pembayaran kost.',
-                'penghuni_id.exists' => 'Data penghuni tidak ditemukan.',
-                'jumlah.numeric' => 'Jumlah pemasukan harus berupa angka.',
-                'jumlah.min' => 'Jumlah pemasukan tidak boleh bernilai negatif.',
-            ]);
-
-            $penghuni = Penghuni::with('kamar')->findOrFail($paymentData['penghuni_id']);
-            $data['penghuni_id'] = $paymentData['penghuni_id'];
-            $data['jumlah'] = $request->filled('jumlah')
-                ? (float) $paymentData['jumlah']
-                : (float) optional($penghuni->kamar)->harga;
-
-            if (! $request->filled('keterangan')) {
+        if ($data['kategori'] === 'pembayaran_kost') {
+            $penghuni = Penghuni::with('kamar')->findOrFail($data['penghuni_id']);
+            if (empty($data['jumlah'])) {
+                $data['jumlah'] = (float) optional($penghuni->kamar)->harga;
+            }
+            if (empty($data['keterangan'])) {
                 $periode = Carbon::parse($data['tanggal'])->locale('id')->translatedFormat('F Y');
                 $data['keterangan'] = 'Pembayaran kost bulan ' . $periode;
             }
-
-            return $data;
+        } else {
+            $data['penghuni_id'] = null;
         }
 
-        $otherIncomeData = $request->validate([
-            'jumlah' => 'required|numeric|min:0',
-        ], [
-            'jumlah.required' => 'Jumlah pemasukan lainnya wajib diisi.',
-            'jumlah.numeric' => 'Jumlah pemasukan harus berupa angka.',
-            'jumlah.min' => 'Jumlah pemasukan tidak boleh bernilai negatif.',
-        ]);
+        $pemasukan->update($data);
 
-        $data['penghuni_id'] = null;
-        $data['jumlah'] = (float) $otherIncomeData['jumlah'];
+        ActivityLog::log('Update Pemasukan', "Memperbarui transaksi pemasukan ID #{$pemasukan->id}");
 
-        return $data;
+        return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil diperbarui!');
+    }
+
+    public function destroy(Pemasukan $pemasukan)
+    {
+        $desc = "Menghapus transaksi pemasukan ID #{$pemasukan->id} (Soft Delete)";
+        $pemasukan->delete();
+
+        ActivityLog::log('Hapus Pemasukan', $desc);
+
+        return redirect()->route('pemasukan.index')->with('success', 'Pemasukan berhasil dihapus!');
+    }
+
+    public function showKwitansi(Pemasukan $pemasukan)
+    {
+        $pemasukan->load('penghuni.kamar');
+        return view('pemasukan.kwitansi', compact('pemasukan'));
     }
 
     private function kategoriPemasukan(): array
@@ -169,24 +156,5 @@ class PemasukanController extends Controller {
             'pembayaran_kost' => 'Pembayaran Kost',
             'pemasukan_lainnya' => 'Pemasukan Lainnya',
         ];
-    }
-
-    private function normalizeWhatsappNumber(?string $phone): ?string
-    {
-        $number = preg_replace('/\D+/', '', (string) $phone);
-
-        if ($number === '') {
-            return null;
-        }
-
-        if (str_starts_with($number, '0')) {
-            return '62' . substr($number, 1);
-        }
-
-        if (str_starts_with($number, '62')) {
-            return $number;
-        }
-
-        return '62' . $number;
     }
 }

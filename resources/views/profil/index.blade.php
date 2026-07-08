@@ -110,17 +110,29 @@
             </div>
             <div class="content-card-body flush">
                 <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Aktivitas</th>
+                            <th>Deskripsi</th>
+                            <th class="text-end">Waktu</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr>
-                            <td><span class="badge-status badge-blue">Login</span></td>
-                            <td>Sesi admin aktif</td>
-                            <td class="text-end text-muted">{{ now()->locale('id')->translatedFormat('d M Y H:i') }}</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge-status badge-success">Akun</span></td>
-                            <td>Data admin dapat diperbarui melalui halaman ini</td>
-                            <td class="text-end text-muted">Aktif</td>
-                        </tr>
+                        @forelse($activities as $activity)
+                            <tr>
+                                <td>
+                                    <span class="badge-status {{ in_array($activity->activity, ['Hapus Kamar', 'Hapus Penghuni', 'Hapus Pemasukan', 'Hapus Pengeluaran']) ? 'badge-danger' : 'badge-blue' }}">
+                                        {{ $activity->activity }}
+                                    </span>
+                                </td>
+                                <td>{{ $activity->description }}</td>
+                                <td class="text-end text-muted">{{ $activity->created_at->locale('id')->translatedFormat('d M Y H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">Belum ada riwayat aktivitas.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

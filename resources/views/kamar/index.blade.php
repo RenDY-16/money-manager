@@ -5,11 +5,10 @@
 
 @section('content')
 @php
-    $statSource = $allKamars ?? $kamars;
-    $total = $statSource->count();
-    $tersedia = $statSource->where('status', 'tersedia')->count();
-    $terisi = $statSource->where('status', 'terisi')->count();
-    $potensi = $statSource->sum('harga');
+    $total = $totalKamarCount ?? 0;
+    $tersedia = $totalKamarTersedia ?? 0;
+    $terisi = $totalKamarTerisi ?? 0;
+    $potensi = $totalKamarPotensi ?? 0;
 @endphp
 
 <div class="page-heading">
@@ -68,7 +67,7 @@
             Terapkan Filter
         </button>
         <a href="{{ route('kamar.index') }}" class="btn-secondary-custom">Reset</a>
-        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $kamars->count() }} data kamar</span>
+        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $kamars->firstItem() ?? 0 }}-{{ $kamars->lastItem() ?? 0 }} dari {{ $kamars->total() }} data kamar</span>
     </form>
     <div class="content-card-body flush">
         @if($kamars->count() > 0)
@@ -87,7 +86,7 @@
                 <tbody>
                     @foreach($kamars as $i => $kamar)
                     <tr>
-                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $kamars->firstItem() + $i }}</td>
                         <td>
                             <div class="table-title">
                                 <span class="row-avatar">{{ strtoupper(substr($kamar->nomor_kamar, 0, 2)) }}</span>
@@ -122,6 +121,14 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
+            <div class="text-muted small fw-semibold">
+                Menampilkan {{ $kamars->firstItem() ?? 0 }}-{{ $kamars->lastItem() ?? 0 }} dari {{ $kamars->total() }} data kamar
+            </div>
+            <div class="pagination-custom-wrapper">
+                {{ $kamars->links() }}
+            </div>
         </div>
         @else
         <div class="empty-state">

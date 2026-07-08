@@ -19,8 +19,32 @@ class DashboardController extends Controller {
         $kamarTersedia = Kamar::where('status', 'tersedia')->count();
         $kamarTerisi = Kamar::where('status', 'terisi')->count();
         $okupansi = $totalKamar > 0 ? round(($kamarTerisi / $totalKamar) * 100) : 0;
+        
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
         $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
+        $awalBulanLalu = Carbon::now()->subMonth()->startOfMonth()->toDateString();
+        $akhirBulanLalu = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+
+        // Pemasukan & Pengeluaran bulan ini vs bulan lalu untuk hitung trend
+        $pemasukanBulanIni = (float) Pemasukan::whereBetween('tanggal', [$awalBulan, $akhirBulan])->sum('jumlah');
+        $pemasukanBulanLalu = (float) Pemasukan::whereBetween('tanggal', [$awalBulanLalu, $akhirBulanLalu])->sum('jumlah');
+        $pengeluaranBulanIni = (float) Pengeluaran::whereBetween('tanggal', [$awalBulan, $akhirBulan])->sum('jumlah');
+        $pengeluaranBulanLalu = (float) Pengeluaran::whereBetween('tanggal', [$awalBulanLalu, $akhirBulanLalu])->sum('jumlah');
+
+        $trendPemasukan = 0.0;
+        if ($pemasukanBulanLalu > 0) {
+            $trendPemasukan = (($pemasukanBulanIni - $pemasukanBulanLalu) / $pemasukanBulanLalu) * 100;
+        } elseif ($pemasukanBulanIni > 0) {
+            $trendPemasukan = 100.0;
+        }
+
+        $trendPengeluaran = 0.0;
+        if ($pengeluaranBulanLalu > 0) {
+            $trendPengeluaran = (($pengeluaranBulanIni - $pengeluaranBulanLalu) / $pengeluaranBulanLalu) * 100;
+        } elseif ($pengeluaranBulanIni > 0) {
+            $trendPengeluaran = 100.0;
+        }
+
         $penghuniLunasIds = Pemasukan::where('kategori', 'pembayaran_kost')
             ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
             ->whereNotNull('penghuni_id')
@@ -34,13 +58,23 @@ class DashboardController extends Controller {
             7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
         ];
 
-        $incomeByMonth = Pemasukan::whereYear('tanggal', $year)->get()
-            ->groupBy(fn ($item) => Carbon::parse($item->tanggal)->month)
-            ->map(fn ($rows) => (float) $rows->sum('jumlah'));
+        // SQL aggregate month queries
+        $isSqlite = \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite';
+        $monthExpr = $isSqlite ? "strftime('%m', tanggal)" : "MONTH(tanggal)";
 
-        $expenseByMonth = Pengeluaran::whereYear('tanggal', $year)->get()
-            ->groupBy(fn ($item) => Carbon::parse($item->tanggal)->month)
-            ->map(fn ($rows) => (float) $rows->sum('jumlah'));
+        $incomeByMonth = Pemasukan::whereYear('tanggal', $year)
+            ->selectRaw("$monthExpr as month, SUM(jumlah) as total")
+            ->groupBy('month')
+            ->get()
+            ->pluck('total', 'month')
+            ->mapWithKeys(fn($val, $key) => [(int)$key => (float)$val]);
+
+        $expenseByMonth = Pengeluaran::whereYear('tanggal', $year)
+            ->selectRaw("$monthExpr as month, SUM(jumlah) as total")
+            ->groupBy('month')
+            ->get()
+            ->pluck('total', 'month')
+            ->mapWithKeys(fn($val, $key) => [(int)$key => (float)$val]);
 
         $chartLabels = [];
         $chartPemasukan = [];
@@ -88,7 +122,8 @@ class DashboardController extends Controller {
         return view('dashboard.index', compact(
             'totalKamar', 'totalPenghuni', 'totalPemasukan', 'totalPengeluaran',
             'saldoBersih', 'kamarTersedia', 'kamarTerisi', 'okupansi',
-            'chartLabels', 'chartPemasukan', 'chartPengeluaran', 'latestTransaksi', 'year', 'penghuniLunas', 'penghuniBelumLunas'
+            'chartLabels', 'chartPemasukan', 'chartPengeluaran', 'latestTransaksi', 'year',
+            'penghuniLunas', 'penghuniBelumLunas', 'trendPemasukan', 'trendPengeluaran'
         ));
     }
 }

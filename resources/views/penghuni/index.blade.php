@@ -5,12 +5,11 @@
 
 @section('content')
 @php
-    $statSource = $allPenghunis ?? $penghunis;
-    $aktif = $statSource->whereNull('tanggal_keluar')->count();
-    $nonaktif = $statSource->whereNotNull('tanggal_keluar')->count();
-    $total = $statSource->count();
-    $lunas = $statSource->whereNull('tanggal_keluar')->where('status_pembayaran_bulan_ini', 'lunas')->count();
-    $belumLunas = $statSource->whereNull('tanggal_keluar')->where('status_pembayaran_bulan_ini', 'belum_lunas')->count();
+    $total = $totalPenghuniCount ?? 0;
+    $aktif = $aktifPenghuniCount ?? 0;
+    $nonaktif = $nonaktifPenghuniCount ?? 0;
+    $lunas = $lunasCount ?? 0;
+    $belumLunas = $belumLunasCount ?? 0;
 @endphp
 
 <div class="page-heading">
@@ -75,7 +74,7 @@
             Terapkan Filter
         </button>
         <a href="{{ route('penghuni.index') }}" class="btn-secondary-custom">Reset</a>
-        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $penghunis->count() }} data penghuni</span>
+        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $penghunis->firstItem() ?? 0 }}-{{ $penghunis->lastItem() ?? 0 }} dari {{ $penghunis->total() }} data penghuni</span>
     </form>
     <div class="content-card-body flush">
         @if($penghunis->count() > 0)
@@ -96,7 +95,7 @@
                 <tbody>
                     @foreach($penghunis as $i => $penghuni)
                     <tr>
-                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $penghunis->firstItem() + $i }}</td>
                         <td>
                             <div class="table-title">
                                 <span class="row-avatar">{{ strtoupper(substr($penghuni->nama, 0, 2)) }}</span>
@@ -149,6 +148,14 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
+            <div class="text-muted small fw-semibold">
+                Menampilkan {{ $penghunis->firstItem() ?? 0 }}-{{ $penghunis->lastItem() ?? 0 }} dari {{ $penghunis->total() }} data penghuni
+            </div>
+            <div class="pagination-custom-wrapper">
+                {{ $penghunis->links() }}
+            </div>
         </div>
         @else
         <div class="empty-state">

@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Pemasukan;
 use App\Models\Pengeluaran;
+use App\Services\FinanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
+    protected FinanceService $financeService;
+
+    public function __construct(FinanceService $financeService)
+    {
+        $this->financeService = $financeService;
+    }
+
     public function index(Request $request)
     {
         return view('laporan.index', $this->buildReportData($request));
@@ -56,24 +64,31 @@ class LaporanController extends Controller
             $selectedType = 'semua';
         }
 
-        $allPemasukan = Pemasukan::with('penghuni.kamar')
-            ->whereYear('tanggal', $selectedYear)
-            ->get();
+        // Optimized Queries: Filter at SQL level instead of fetching entire year
+        $pemasukanQuery = Pemasukan::with('penghuni.kamar')->whereYear('tanggal', $selectedYear);
+        if ($selectedMonth !== 'semua') {
+            $pemasukanQuery->whereMonth('tanggal', $selectedMonth);
+        }
+        $periodPemasukan = $pemasukanQuery->get();
 
-        $allPengeluaran = Pengeluaran::whereYear('tanggal', $selectedYear)
-            ->get();
+        $pengeluaranQuery = Pengeluaran::whereYear('tanggal', $selectedYear);
+        if ($selectedMonth !== 'semua') {
+            $pengeluaranQuery->whereMonth('tanggal', $selectedMonth);
+        }
+        $periodPengeluaran = $pengeluaranQuery->get();
 
-        $periodPemasukan = $this->filterByMonth($allPemasukan, $selectedMonth);
-        $periodPengeluaran = $this->filterByMonth($allPengeluaran, $selectedMonth);
-
-        // Ringkasan keuangan tetap memakai pemasukan dan pengeluaran periode yang sama.
-        // Filter jenis hanya mengatur daftar transaksi yang ditampilkan, sehingga saldo tidak berubah negatif hanya karena admin memilih jenis pengeluaran.
+        // Financial totals
         $totalPemasukan = (float) $periodPemasukan->sum('jumlah');
         $totalPengeluaran = (float) $periodPengeluaran->sum('jumlah');
         $saldoBersih = $totalPemasukan - $totalPengeluaran;
 
         $filteredPemasukan = $selectedType === 'pengeluaran' ? collect() : $periodPemasukan;
         $filteredPengeluaran = $selectedType === 'pemasukan' ? collect() : $periodPengeluaran;
+
+        // Use service to fetch monthly breakdown efficiently using SQL Group By
+        $breakdown = $this->financeService->getMonthlyBreakdown($selectedYear);
+        $incomeByMonth = $breakdown['income'];
+        $expenseByMonth = $breakdown['expense'];
 
         $chartMonths = $selectedMonth === 'semua' ? array_keys($months) : [$selectedMonth];
         $chartLabels = [];
@@ -82,36 +97,33 @@ class LaporanController extends Controller
 
         foreach ($chartMonths as $monthNumber) {
             $chartLabels[] = $months[$monthNumber];
-            $chartPemasukan[] = (float) $allPemasukan
-                ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
-                ->sum('jumlah');
-            $chartPengeluaran[] = (float) $allPengeluaran
-                ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $monthNumber)
-                ->sum('jumlah');
+            $chartPemasukan[] = $incomeByMonth[$monthNumber] ?? 0.0;
+            $chartPengeluaran[] = $expenseByMonth[$monthNumber] ?? 0.0;
         }
 
-        $pengeluaranKategori = $periodPengeluaran
+        // SQL aggregate category query instead of grouping in memory
+        $pengeluaranKategoriQuery = Pengeluaran::whereYear('tanggal', $selectedYear);
+        if ($selectedMonth !== 'semua') {
+            $pengeluaranKategoriQuery->whereMonth('tanggal', $selectedMonth);
+        }
+        $pengeluaranKategori = $pengeluaranKategoriQuery
+            ->selectRaw('kategori, SUM(jumlah) as total, COUNT(*) as jumlah_transaksi')
             ->groupBy('kategori')
-            ->map(function ($rows, $kategori) {
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($row) {
                 return [
-                    'kategori' => $kategori ?: 'Lainnya',
-                    'total' => (float) $rows->sum('jumlah'),
-                    'jumlah_transaksi' => $rows->count(),
+                    'kategori' => $row->kategori ?: 'Lainnya',
+                    'total' => (float) $row->total,
+                    'jumlah_transaksi' => (int) $row->jumlah_transaksi,
                 ];
-            })
-            ->sortByDesc('total')
-            ->values();
+            });
 
         $chartKategoriLabels = $pengeluaranKategori->pluck('kategori')->all();
         $chartKategoriTotals = $pengeluaranKategori->pluck('total')->all();
 
-        $latestPemasukan = $filteredPemasukan
-            ->sortByDesc('tanggal')
-            ->values();
-
-        $latestPengeluaran = $filteredPengeluaran
-            ->sortByDesc('tanggal')
-            ->values();
+        $latestPemasukan = $filteredPemasukan->sortByDesc('tanggal')->values();
+        $latestPengeluaran = $filteredPengeluaran->sortByDesc('tanggal')->values();
 
         $filterLabel = $this->filterLabel($months, $selectedMonth, $selectedYear, $selectedType);
         $periodeLabel = $this->periodeLabel($months, $selectedMonth, $selectedYear);
@@ -125,27 +137,24 @@ class LaporanController extends Controller
         );
     }
 
-    private function filterByMonth(Collection $rows, int|string $selectedMonth): Collection
-    {
-        if ($selectedMonth === 'semua') {
-            return $rows;
-        }
-
-        return $rows
-            ->filter(fn ($item) => Carbon::parse($item->tanggal)->month === (int) $selectedMonth)
-            ->values();
-    }
-
     private function availableYears(): array
     {
         $currentYear = Carbon::now()->year;
         $yearRange = range($currentYear - 3, $currentYear + 10);
 
-        $years = collect($yearRange)
-            ->merge(Pemasukan::pluck('tanggal')->map(fn ($date) => Carbon::parse($date)->year))
-            ->merge(Pengeluaran::pluck('tanggal')->map(fn ($date) => Carbon::parse($date)->year))
-            ->filter()
+        // Fetch min & max dates using high speed index searches instead of pulling all dates
+        $minPemasukan = Pemasukan::min('tanggal');
+        $minPengeluaran = Pengeluaran::min('tanggal');
+        $maxPemasukan = Pemasukan::max('tanggal');
+        $maxPengeluaran = Pengeluaran::max('tanggal');
+
+        $minYear = collect([$minPemasukan, $minPengeluaran])->filter()->map(fn($d) => Carbon::parse($d)->year)->min() ?? ($currentYear - 3);
+        $maxYear = collect([$maxPemasukan, $maxPengeluaran])->filter()->map(fn($d) => Carbon::parse($d)->year)->max() ?? ($currentYear + 10);
+
+        $years = collect(range($minYear, $maxYear))
+            ->merge($yearRange)
             ->unique()
+            ->sort()
             ->values()
             ->all();
 

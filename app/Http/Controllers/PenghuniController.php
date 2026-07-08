@@ -1,36 +1,43 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Penghuni;
 use App\Models\Kamar;
-use App\Models\Pemasukan;
+use App\Models\ActivityLog;
+use App\Services\TenantService;
+use App\Http\Requests\StorePenghuniRequest;
+use App\Http\Requests\UpdatePenghuniRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class PenghuniController extends Controller {
-    public function index(Request $request){
+class PenghuniController extends Controller
+{
+    protected TenantService $tenantService;
+
+    public function __construct(TenantService $tenantService)
+    {
+        $this->tenantService = $tenantService;
+    }
+
+    public function index(Request $request)
+    {
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
         $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
-        $penghuniLunasIds = Pemasukan::where('kategori', 'pembayaran_kost')
-            ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
-            ->whereNotNull('penghuni_id')
-            ->pluck('penghuni_id')
-            ->unique()
-            ->all();
+        
+        // Use service to get lunas IDs
+        $penghuniLunasIds = $this->tenantService->getLunasPenghuniIds($awalBulan, $akhirBulan);
 
         $query = Penghuni::with('kamar');
 
         if ($request->filled('search')) {
-            $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%')
-                    ->orWhere('no_hp', 'like', '%' . $search . '%')
-                    ->orWhereHas('kamar', fn ($room) => $room->where('nomor_kamar', 'like', '%' . $search . '%'));
-            });
+            $query->search(trim($request->search));
         }
 
         if ($request->filled('status')) {
             if ($request->status === 'aktif') {
-                $query->whereNull('tanggal_keluar');
+                $query->active();
             } elseif ($request->status === 'keluar') {
                 $query->whereNotNull('tanggal_keluar');
             }
@@ -40,88 +47,103 @@ class PenghuniController extends Controller {
             if ($request->pembayaran === 'lunas') {
                 $query->whereIn('id', $penghuniLunasIds);
             } elseif ($request->pembayaran === 'belum_lunas') {
-                $query->whereNull('tanggal_keluar')->whereNotIn('id', $penghuniLunasIds);
+                $query->active()->whereNotIn('id', $penghuniLunasIds);
             }
         }
 
-        $penghunis = $query->latest()->get()->map(function ($penghuni) use ($penghuniLunasIds) {
+        // Paginate for scalability
+        $penghunis = $query->latest()->paginate(10)->withQueryString();
+
+        // Map status on the paginated result
+        $penghunis->getCollection()->transform(function ($penghuni) use ($penghuniLunasIds) {
             $penghuni->status_pembayaran_bulan_ini = in_array($penghuni->id, $penghuniLunasIds, true)
                 ? 'lunas'
                 : 'belum_lunas';
             return $penghuni;
         });
 
-        $allPenghunis = Penghuni::with('kamar')->get()->map(function ($penghuni) use ($penghuniLunasIds) {
-            $penghuni->status_pembayaran_bulan_ini = in_array($penghuni->id, $penghuniLunasIds, true)
-                ? 'lunas'
-                : 'belum_lunas';
-            return $penghuni;
-        });
+        // Optimized SQL Counts
+        $totalPenghuniCount = Penghuni::count();
+        $aktifPenghuniCount = Penghuni::active()->count();
+        $nonaktifPenghuniCount = Penghuni::whereNotNull('tanggal_keluar')->count();
+        
+        // Lunas count is active and lunas
+        $lunasCount = Penghuni::active()->whereIn('id', $penghuniLunasIds)->count();
+        $belumLunasCount = max(0, $aktifPenghuniCount - $lunasCount);
+
         $periodeTagihan = Carbon::now()->locale('id')->translatedFormat('F Y');
 
-        return view('penghuni.index', compact('penghunis', 'allPenghunis', 'periodeTagihan'));
+        return view('penghuni.index', compact(
+            'penghunis',
+            'periodeTagihan',
+            'totalPenghuniCount',
+            'aktifPenghuniCount',
+            'nonaktifPenghuniCount',
+            'lunasCount',
+            'belumLunasCount'
+        ));
     }
 
-    public function create(){
-        $kamars = Kamar::where('status', 'tersedia')->get();
+    public function create()
+    {
+        $kamars = Kamar::available()->get();
         return view('penghuni.create', compact('kamars'));
     }
 
-    public function store(Request $request){
-        $request->validate([
-            'nama' => 'required|string',
-            'no_hp' => ['required', 'regex:/^[0-9]+$/', 'min:10', 'max:15'],
-            'kamar_id' => 'required|exists:kamars,id',
-            'tanggal_masuk' => 'required|date',
-        ], $this->validationMessages());
-        Penghuni::create($request->all());
-        Kamar::find($request->kamar_id)->update(['status' => 'terisi']);
+    public function store(StorePenghuniRequest $request)
+    {
+        $data = $request->validated();
+
+        DB::transaction(function () use ($data) {
+            $penghuni = Penghuni::create($data);
+            Kamar::findOrFail($data['kamar_id'])->update(['status' => 'terisi']);
+            ActivityLog::log('Tambah Penghuni', "Menambahkan penghuni baru: {$penghuni->nama} ke kamar " . optional($penghuni->kamar)->nomor_kamar);
+        });
+
         return redirect()->route('penghuni.index')->with('success', 'Penghuni berhasil ditambahkan!');
     }
 
-    public function edit(Penghuni $penghuni){
+    public function edit(Penghuni $penghuni)
+    {
         $kamars = Kamar::all();
         return view('penghuni.edit', compact('penghuni', 'kamars'));
     }
 
-    public function update(Request $request, Penghuni $penghuni){
-        $request->validate([
-            'nama' => 'required|string',
-            'no_hp' => ['required', 'regex:/^[0-9]+$/', 'min:10', 'max:15'],
-            'kamar_id' => 'required|exists:kamars,id',
-            'tanggal_masuk' => 'required|date',
-            'tanggal_keluar' => 'nullable|date|after_or_equal:tanggal_masuk',
-        ], $this->validationMessages());
+    public function update(UpdatePenghuniRequest $request, Penghuni $penghuni)
+    {
+        $data = $request->validated();
 
-        if ($penghuni->kamar_id != $request->kamar_id) {
-            Kamar::find($penghuni->kamar_id)?->update(['status' => 'tersedia']);
-            Kamar::find($request->kamar_id)?->update(['status' => 'terisi']);
-        }
+        DB::transaction(function () use ($data, $penghuni) {
+            $oldKamarId = $penghuni->kamar_id;
+            $newKamarId = $data['kamar_id'];
 
-        if ($request->filled('tanggal_keluar')) {
-            Kamar::find($request->kamar_id)?->update(['status' => 'tersedia']);
-        } else {
-            Kamar::find($request->kamar_id)?->update(['status' => 'terisi']);
-        }
+            if ($oldKamarId != $newKamarId) {
+                Kamar::find($oldKamarId)?->update(['status' => 'tersedia']);
+                Kamar::find($newKamarId)?->update(['status' => 'terisi']);
+            }
 
-        $penghuni->update($request->all());
+            if (!empty($data['tanggal_keluar'])) {
+                Kamar::find($newKamarId)?->update(['status' => 'tersedia']);
+            } else {
+                Kamar::find($newKamarId)?->update(['status' => 'terisi']);
+            }
+
+            $penghuni->update($data);
+            ActivityLog::log('Update Penghuni', "Memperbarui data penghuni: {$penghuni->nama}");
+        });
+
         return redirect()->route('penghuni.index')->with('success', 'Penghuni berhasil diperbarui!');
     }
 
-    public function destroy(Penghuni $penghuni){
-        Kamar::find($penghuni->kamar_id)?->update(['status' => 'tersedia']);
-        $penghuni->delete();
-        return redirect()->route('penghuni.index')->with('success', 'Penghuni berhasil dihapus!');
-    }
-
-    private function validationMessages(): array
+    public function destroy(Penghuni $penghuni)
     {
-        return [
-            'no_hp.required' => 'Nomor telepon wajib diisi.',
-            'no_hp.regex' => 'Nomor telepon hanya boleh berisi angka. Hapus huruf, spasi, tanda plus, atau simbol lain.',
-            'no_hp.min' => 'Nomor telepon minimal 10 digit.',
-            'no_hp.max' => 'Nomor telepon maksimal 15 digit.',
-            'tanggal_keluar.after_or_equal' => 'Tanggal keluar tidak boleh lebih awal dari tanggal masuk.',
-        ];
+        DB::transaction(function () use ($penghuni) {
+            Kamar::find($penghuni->kamar_id)?->update(['status' => 'tersedia']);
+            $name = $penghuni->nama;
+            $penghuni->delete();
+            ActivityLog::log('Hapus Penghuni', "Menghapus penghuni: {$name} (Soft Delete)");
+        });
+
+        return redirect()->route('penghuni.index')->with('success', 'Penghuni berhasil dihapus!');
     }
 }

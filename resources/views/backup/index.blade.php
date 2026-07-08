@@ -81,7 +81,7 @@
         </div>
     </div>
     <div class="col-xl-5">
-        <div class="content-card h-100">
+        <div class="content-card mb-4">
             <div class="content-card-header">
                 <h5><span class="material-symbols-outlined">info</span> Catatan Backup</h5>
             </div>
@@ -97,8 +97,28 @@
                     <li>Download backup sebelum melakukan perubahan besar.</li>
                     <li>Simpan file backup di Google Drive atau penyimpanan eksternal.</li>
                     <li>Jangan bagikan file backup karena berisi data penghuni dan transaksi.</li>
-                    <li>Untuk pemulihan data otomatis, perlu fitur restore terpisah agar aman.</li>
+                    <li>Gunakan formulir restore di bawah untuk memulihkan data dari file JSON.</li>
                 </ul>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-header">
+                <h5><span class="material-symbols-outlined">settings_backup_restore</span> Restore Data</h5>
+            </div>
+            <div class="content-card-body">
+                <form action="{{ route('backup.restore.json') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('PERINGATAN: Menjalankan restore akan MENGHAPUS SEMUA DATA KAMAR, PENGHUNI, PEMASUKAN, & PENGELUARAN aktif dan menggantinya dengan isi file backup ini. Lanjutkan?')">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label">Unggah File Backup JSON</label>
+                        <input type="file" name="backup_file" class="form-control" accept=".json" required>
+                        <div class="form-text text-muted">Format file yang diterima: .json</div>
+                    </div>
+                    <button type="submit" class="btn-primary-custom w-100" style="min-height: 42px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">restore</span>
+                        Mulai Restore Data
+                    </button>
+                </form>
             </div>
         </div>
     </div>
