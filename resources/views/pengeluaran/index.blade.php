@@ -149,7 +149,8 @@
                     <div class="empty-state">
                         <span class="material-symbols-outlined">account_balance_wallet</span>
                         <h6>Data tidak ditemukan</h6>
-                        <p>Ubah filter atau catat pengeluaran baru.</p>
+                        <p>Ubah filter pencarian atau catat pengeluaran baru.</p>
+                        <a href="{{ route('pengeluaran.index') }}" class="btn-secondary-custom" style="min-height: 34px; padding: 8px 14px; font-size: 12px;">Reset Filter</a>
                     </div>
                 @endif
             </div>

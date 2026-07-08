@@ -16,11 +16,12 @@
     <div class="col-xl-4">
         <div class="content-card">
             <div class="content-card-body text-center">
-                <div class="avatar mx-auto mb-3" style="width:96px;height:96px;font-size:30px;">
+                <div class="avatar mx-auto mb-3" style="width:96px;height:96px;font-size:30px;" id="avatarContainer">
                     @if($user?->profile_photo)
-                        <img src="{{ asset($user->profile_photo) }}" alt="Foto admin" class="profile-avatar-img">
+                        <img src="{{ asset($user->profile_photo) }}" alt="Foto admin" class="profile-avatar-img" id="avatarPreview">
                     @else
-                        {{ strtoupper(substr($user->name ?? 'AJ', 0, 2)) }}
+                        <span id="avatarPlaceholder">{{ strtoupper(substr($user->name ?? 'AJ', 0, 2)) }}</span>
+                        <img src="" alt="Foto admin" class="profile-avatar-img d-none" id="avatarPreview">
                     @endif
                 </div>
                 <h5 class="fw-bold mb-1">{{ $user->name ?? 'Admin' }}</h5>
@@ -62,7 +63,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Foto Profil Admin</label>
-                            <input type="file" name="profile_photo" class="form-control" accept="image/png,image/jpeg,image/webp">
+                            <input type="file" name="profile_photo" id="profilePhotoInput" class="form-control" accept="image/png,image/jpeg,image/webp">
                             <div class="form-text text-muted">Format jpg, jpeg, png, atau webp. Maksimal 2 MB.</div>
                         </div>
                     </div>
@@ -140,3 +141,30 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput = document.getElementById('profilePhotoInput');
+        const preview = document.getElementById('avatarPreview');
+        const placeholder = document.getElementById('avatarPlaceholder');
+
+        if (fileInput && preview) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        preview.src = event.target.result;
+                        preview.classList.remove('d-none');
+                        if (placeholder) {
+                            placeholder.classList.add('d-none');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+@endpush

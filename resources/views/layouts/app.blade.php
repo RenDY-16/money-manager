@@ -132,23 +132,25 @@
     </header>
 
     <main class="page-content">
+    <div class="toast-container" id="toastContainer">
         @if(session('success'))
-            <div class="alert-modern alert-success-modern">
-                <i class="bi bi-check-circle-fill"></i>
-                {{ session('success') }}
+            <div class="toast-item toast-success" role="alert">
+                <span class="material-symbols-outlined toast-icon">check_circle</span>
+                <div class="toast-content">{{ session('success') }}</div>
+                <button class="toast-close" onclick="closeToast(this)">&times;</button>
             </div>
         @endif
 
         @if($errors->any())
-            <div class="alert-modern alert-danger-modern">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
+            @foreach($errors->all() as $error)
+                <div class="toast-item toast-danger" role="alert">
+                    <span class="material-symbols-outlined toast-icon">warning</span>
+                    <div class="toast-content">{{ $error }}</div>
+                    <button class="toast-close" onclick="closeToast(this)">&times;</button>
                 </div>
-            </div>
+            @endforeach
         @endif
+    </div>
 
         @yield('content')
     </main>
@@ -191,10 +193,26 @@
         });
     }
 
+    function closeToast(button) {
+        const toast = button.closest('.toast-item');
+        if (toast) {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         document.body.dataset.theme = localStorage.getItem('kostAjTheme') || 'light';
         document.body.dataset.density = localStorage.getItem('kostAjDensity') || 'comfortable';
         refreshSettingsState();
+
+        // Auto dismiss toasts after 4 seconds
+        document.querySelectorAll('.toast-item').forEach(toast => {
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        });
     });
 
     document.addEventListener('click', (event) => {

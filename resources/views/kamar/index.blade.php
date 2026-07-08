@@ -134,7 +134,8 @@
         <div class="empty-state">
             <span class="material-symbols-outlined">bed</span>
             <h6>Data tidak ditemukan</h6>
-            <p>Ubah filter atau tambah data kamar baru.</p>
+            <p>Ubah filter pencarian atau tambah data kamar baru.</p>
+            <a href="{{ route('kamar.index') }}" class="btn-secondary-custom" style="min-height: 34px; padding: 8px 14px; font-size: 12px;">Reset Filter</a>
         </div>
         @endif
     </div>

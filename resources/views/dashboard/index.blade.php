@@ -65,26 +65,11 @@
         <div class="content-card h-100">
             <div class="content-card-header">
                 <h5><span class="material-symbols-outlined">bar_chart</span> Statistik Keuangan</h5>
-                <div class="d-flex align-items-center gap-3 small fw-bold text-muted">
-                    <span><i class="legend-dot" style="background:#9fb2e9;"></i>Pemasukan</span>
-                    <span><i class="legend-dot" style="background:#f3b7bd;"></i>Pengeluaran</span>
-                </div>
+                <span class="badge-status badge-blue">{{ $year }}</span>
             </div>
             <div class="content-card-body">
-                <div class="css-chart">
-                    @foreach($chartLabels as $index => $label)
-                        @php
-                            $incomeHeight = max(4, ($chartPemasukan[$index] / $maxChart) * 210);
-                            $expenseHeight = max(4, ($chartPengeluaran[$index] / $maxChart) * 210);
-                        @endphp
-                        <div class="chart-month">
-                            <div class="chart-bars">
-                                <div class="chart-bar income" style="height: {{ $incomeHeight }}px" title="Pemasukan {{ $label }}"></div>
-                                <div class="chart-bar expense" style="height: {{ $expenseHeight }}px" title="Pengeluaran {{ $label }}"></div>
-                            </div>
-                            <div class="chart-label">{{ $label }}</div>
-                        </div>
-                    @endforeach
+                <div style="height: 310px; position: relative;">
+                    <canvas id="dashboardChart"></canvas>
                 </div>
             </div>
         </div>
@@ -174,3 +159,63 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ctx = document.getElementById('dashboardChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($chartLabels) !!},
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: {!! json_encode($chartPemasukan) !!},
+                        backgroundColor: '#9fb2e9',
+                        borderRadius: 4,
+                        borderWidth: 0
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: {!! json_encode($chartPengeluaran) !!},
+                        backgroundColor: '#f3b7bd',
+                        borderRadius: 4,
+                        borderWidth: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => 'Rp ' + Number(value).toLocaleString('id-ID'),
+                            font: { family: 'Inter', size: 11 }
+                        },
+                        grid: { color: '#e5e7eb' }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Inter', size: 11 } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Inter', weight: '700', size: 12 }, boxWidth: 12 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.dataset.label}: Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endpush
