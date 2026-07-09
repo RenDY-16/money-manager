@@ -154,7 +154,7 @@
                 Menampilkan {{ $penghunis->firstItem() ?? 0 }}-{{ $penghunis->lastItem() ?? 0 }} dari {{ $penghunis->total() }} data penghuni
             </div>
             <div class="pagination-custom-wrapper">
-                {{ $penghunis->links() }}
+                {{ $penghunis->links('layouts.pagination') }}
             </div>
         </div>
         @else

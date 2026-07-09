@@ -127,7 +127,7 @@
                 Menampilkan {{ $kamars->firstItem() ?? 0 }}-{{ $kamars->lastItem() ?? 0 }} dari {{ $kamars->total() }} data kamar
             </div>
             <div class="pagination-custom-wrapper">
-                {{ $kamars->links() }}
+                {{ $kamars->links('layouts.pagination') }}
             </div>
         </div>
         @else

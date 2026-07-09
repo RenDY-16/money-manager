@@ -142,7 +142,7 @@
                             Menampilkan {{ $pengeluarans->firstItem() ?? 0 }}-{{ $pengeluarans->lastItem() ?? 0 }} dari {{ $pengeluarans->total() }} transaksi
                         </div>
                         <div class="pagination-custom-wrapper">
-                            {{ $pengeluarans->links() }}
+                            {{ $pengeluarans->links('layouts.pagination') }}
                         </div>
                     </div>
                 @else

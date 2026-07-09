@@ -252,7 +252,7 @@
                             Menampilkan {{ $pemasukans->firstItem() ?? 0 }}-{{ $pemasukans->lastItem() ?? 0 }} dari {{ $pemasukans->total() }} transaksi
                         </div>
                         <div class="pagination-custom-wrapper">
-                            {{ $pemasukans->links() }}
+                            {{ $pemasukans->links('layouts.pagination') }}
                         </div>
                     </div>
                 @else

@@ -1150,3 +1150,50 @@
             color: var(--text-muted);
             max-width: 320px;
         }
+
+        /* Custom Pagination Styles */
+        .pagination-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pagination-item:hover:not(.disabled):not(.active) {
+            background: var(--surface-low);
+            border-color: var(--border-strong);
+            color: var(--primary);
+        }
+
+        .pagination-item.active {
+            background: var(--primary-container);
+            border-color: var(--primary-container);
+            color: #ffffff;
+            font-weight: 700;
+            cursor: default;
+        }
+
+        .pagination-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--surface-low);
+            border-color: var(--border);
+        }
