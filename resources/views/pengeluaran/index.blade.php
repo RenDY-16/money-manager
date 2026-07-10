@@ -79,7 +79,6 @@
         <div class="content-card">
             <div class="content-card-header">
                 <h5><span class="material-symbols-outlined">receipt_long</span> Riwayat Pengeluaran</h5>
-                <span class="badge-status badge-danger">Menampilkan {{ $pengeluarans->firstItem() ?? 0 }}-{{ $pengeluarans->lastItem() ?? 0 }} dari {{ $pengeluarans->total() }} transaksi</span>
             </div>
             <form method="GET" action="{{ route('pengeluaran.index') }}" class="filter-box">
                 <input class="compact-input" type="search" name="search" value="{{ request('search') }}" placeholder="Cari kategori/keterangan...">
@@ -138,9 +137,6 @@
                         </table>
                     </div>
                     <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
-                        <div class="text-muted small fw-semibold">
-                            Menampilkan {{ $pengeluarans->firstItem() ?? 0 }}-{{ $pengeluarans->lastItem() ?? 0 }} dari {{ $pengeluarans->total() }} transaksi
-                        </div>
                         <div class="pagination-custom-wrapper">
                             {{ $pengeluarans->links('layouts.pagination') }}
                         </div>

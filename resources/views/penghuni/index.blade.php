@@ -74,8 +74,7 @@
             Terapkan Filter
         </button>
         <a href="{{ route('penghuni.index') }}" class="btn-secondary-custom">Reset</a>
-        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $penghunis->firstItem() ?? 0 }}-{{ $penghunis->lastItem() ?? 0 }} dari {{ $penghunis->total() }} data penghuni</span>
-    </form>
+      </form>
     <div class="content-card-body flush">
         @if($penghunis->count() > 0)
         <div class="table-scroll">
@@ -150,9 +149,6 @@
             </table>
         </div>
         <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
-            <div class="text-muted small fw-semibold">
-                Menampilkan {{ $penghunis->firstItem() ?? 0 }}-{{ $penghunis->lastItem() ?? 0 }} dari {{ $penghunis->total() }} data penghuni
-            </div>
             <div class="pagination-custom-wrapper">
                 {{ $penghunis->links('layouts.pagination') }}
             </div>

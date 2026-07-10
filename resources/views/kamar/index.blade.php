@@ -67,7 +67,6 @@
             Terapkan Filter
         </button>
         <a href="{{ route('kamar.index') }}" class="btn-secondary-custom">Reset</a>
-        <span class="ms-auto text-muted small fw-semibold">Menampilkan {{ $kamars->firstItem() ?? 0 }}-{{ $kamars->lastItem() ?? 0 }} dari {{ $kamars->total() }} data kamar</span>
     </form>
     <div class="content-card-body flush">
         @if($kamars->count() > 0)
@@ -123,9 +122,7 @@
             </table>
         </div>
         <div class="p-3 d-flex justify-content-between align-items-center border-top border-light">
-            <div class="text-muted small fw-semibold">
-                Menampilkan {{ $kamars->firstItem() ?? 0 }}-{{ $kamars->lastItem() ?? 0 }} dari {{ $kamars->total() }} data kamar
-            </div>
+        
             <div class="pagination-custom-wrapper">
                 {{ $kamars->links('layouts.pagination') }}
             </div>
