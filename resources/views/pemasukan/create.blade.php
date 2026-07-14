@@ -4,6 +4,14 @@
 @section('subtitle', 'Catat pembayaran kost atau pemasukan lainnya')
 
 @section('content')
+<div class="breadcrumb-nav">
+    <a href="{{ route('dashboard') }}">Dashboard</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="{{ route('pemasukan.index') }}">Manajemen Pemasukan</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Tambah Pemasukan</span>
+</div>
+
 <div class="form-card animate-in">
     <h5 style="font-size: 18px; font-weight: 700; color: var(--navy-900); margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
         <i class="bi bi-plus-circle-fill" style="color: var(--navy-500);"></i> Form Tambah Pemasukan

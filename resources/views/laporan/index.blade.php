@@ -223,89 +223,96 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(monthlyCtx, {
-        type: 'bar',
-        data: {
-            labels: {!! json_encode($chartLabels) !!},
-            datasets: [
-                {
-                    label: 'Pemasukan',
-                    data: {!! json_encode($chartPemasukan) !!},
-                    backgroundColor: '#9fb2e9',
-                    borderRadius: 4,
-                    borderWidth: 0
-                },
-                {
-                    label: 'Pengeluaran',
-                    data: {!! json_encode($chartPengeluaran) !!},
-                    backgroundColor: '#f3b7bd',
-                    borderRadius: 4,
-                    borderWidth: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => 'Rp ' + Number(value).toLocaleString('id-ID'),
-                        font: { family: 'Inter', size: 11 }
-                    },
-                    grid: { color: '#e5e7eb' }
-                },
-                x: {
-                    ticks: { font: { family: 'Inter', size: 11 } },
-                    grid: { display: false }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: { font: { family: 'Inter', weight: '700', size: 12 }, boxWidth: 12 }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: context => `${context.dataset.label}: Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`
-                    }
-                }
-            }
-        }
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const isDark = document.body.dataset.theme === 'dark';
+        const gridColor = isDark ? '#333' : '#e5e7eb';
+        const tickColor = isDark ? '#ccc' : undefined;
 
-    @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode($chartKategoriLabels) !!},
-            datasets: [{
-                data: {!! json_encode($chartKategoriTotals) !!},
-                backgroundColor: ['#1e40af', '#0058be', '#93c5fd', '#f59e0b', '#dc2626', '#6b7280', '#10b981', '#8b5cf6'],
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($chartLabels) !!},
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: {!! json_encode($chartPemasukan) !!},
+                        backgroundColor: '#9fb2e9',
+                        borderRadius: 4,
+                        borderWidth: 0
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: {!! json_encode($chartPengeluaran) !!},
+                        backgroundColor: '#f3b7bd',
+                        borderRadius: 4,
+                        borderWidth: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => 'Rp ' + Number(value).toLocaleString('id-ID'),
+                            font: { family: 'Inter', size: 11 },
+                            color: tickColor
+                        },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Inter', size: 11 }, color: tickColor },
+                        grid: { display: false }
+                    }
                 },
-                tooltip: {
-                    callbacks: {
-                        label: context => `${context.label}: Rp ${Number(context.parsed).toLocaleString('id-ID')}`
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Inter', weight: '700', size: 12 }, boxWidth: 12, color: tickColor }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.dataset.label}: Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`
+                        }
                     }
                 }
             }
-        }
+        });
+
+        @if(count($chartKategoriLabels) > 0 && array_sum($chartKategoriTotals) > 0)
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {!! json_encode($chartKategoriLabels) !!},
+                datasets: [{
+                    data: {!! json_encode($chartKategoriTotals) !!},
+                    backgroundColor: ['#1e40af', '#0058be', '#93c5fd', '#f59e0b', '#dc2626', '#6b7280', '#10b981', '#8b5cf6'],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#070707' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12, color: tickColor }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.label}: Rp ${Number(context.parsed).toLocaleString('id-ID')}`
+                        }
+                    }
+                }
+            }
+        });
+        @endif
     });
-    @endif
 
     function printCleanReport() {
         const source = document.getElementById('printArea').cloneNode(true);

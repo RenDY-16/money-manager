@@ -123,7 +123,7 @@
                                             <a href="{{ route('pengeluaran.edit', $pengeluaran) }}" class="btn-action btn-edit" title="Edit">
                                                 <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                             </a>
-                                            <form action="{{ route('pengeluaran.destroy', $pengeluaran) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus pengeluaran ini?')">
+                                            <form action="{{ route('pengeluaran.destroy', $pengeluaran) }}" method="POST" onsubmit="return confirmDelete(this, 'Yakin ingin menghapus pengeluaran ini? Data akan dipindahkan ke Recycle Bin.')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-action btn-delete" title="Hapus">
                                                     <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
