@@ -60,6 +60,22 @@
             box-shadow: var(--shadow-md);
         }
 
+        .mac-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .dot-mac {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-mac.red { background: #ff5f56; }
+        .dot-mac.yellow { background: #ffbd2e; }
+        .dot-mac.green { background: #27c93f; }
+
         .login-info {
             background: var(--card-light);
             color: var(--text);
@@ -347,6 +363,11 @@
     <div class="login-shell">
         <aside class="login-info">
             <div>
+                <div class="mac-dots">
+                    <span class="dot-mac red"></span>
+                    <span class="dot-mac yellow"></span>
+                    <span class="dot-mac green"></span>
+                </div>
                 <a class="brand" href="{{ route('landing') }}">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo Kost AJ Lanraki">
                     <div>

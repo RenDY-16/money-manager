@@ -23,8 +23,10 @@
             --primary-hover: #27272a;
             --success: #10b981;
             --success-soft: #ecfdf5;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 12px -2px rgba(9, 9, 11, 0.04);
+            --shadow-sm: 0 1px 2px 0 rgba(9, 9, 11, 0.01), 0 2px 6px 0 rgba(9, 9, 11, 0.02);
+            --shadow-md: 0 12px 34px -10px rgba(9, 9, 11, 0.06), 0 2px 8px -2px rgba(9, 9, 11, 0.02);
+            --shadow-hover: 0 30px 60px -15px rgba(9, 9, 11, 0.08), 0 12px 24px -10px rgba(9, 9, 11, 0.03);
+            --transition-bezier: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * {
@@ -55,14 +57,26 @@
         }
 
         .landing-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(251, 251, 251, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            width: 100%;
+            transition: var(--transition-bezier);
+        }
+
+        .nav-container {
             max-width: 1180px;
             margin: 0 auto;
-            padding: 32px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            border-bottom: 1px solid var(--border);
+            width: 100%;
         }
 
         .brand {
@@ -213,6 +227,22 @@
             box-shadow: var(--shadow-md);
         }
 
+        .mac-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-right: 12px;
+        }
+        .dot-mac {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-mac.red { background: #ff5f56; }
+        .dot-mac.yellow { background: #ffbd2e; }
+        .dot-mac.green { background: #27c93f; }
+
         .screen-top {
             display: flex;
             align-items: center;
@@ -356,10 +386,17 @@
         .feature-card {
             background: var(--white);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 24px;
             min-height: 180px;
             box-shadow: var(--shadow-sm);
+            transition: var(--transition-bezier);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary);
         }
 
         .feature-icon {
@@ -474,26 +511,28 @@
 <body>
     <div class="page-wrapper">
         <nav class="landing-nav">
-            <a class="brand" href="{{ route('landing') }}">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo Kost AJ Lanraki">
-                <div>
-                    <strong>Kost AJ Lanraki</strong>
-                    <span>Management v1.0</span>
-                </div>
-            </a>
+            <div class="nav-container">
+                <a class="brand" href="{{ route('landing') }}">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo Kost AJ Lanraki">
+                    <div>
+                        <strong>Kost AJ Lanraki</strong>
+                        <span>Management v1.0</span>
+                    </div>
+                </a>
 
-            <div class="nav-actions">
-                @auth
-                    <a href="{{ route('dashboard') }}" class="btn-main">
-                        <i class="bi bi-speedometer2"></i>
-                        Dashboard
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="btn-main">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        Login Admin
-                    </a>
-                @endauth
+                <div class="nav-actions">
+                    @auth
+                        <a href="{{ route('dashboard') }}" class="btn-main">
+                            <i class="bi bi-speedometer2"></i>
+                            Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="btn-main">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Login Admin
+                        </a>
+                    @endauth
+                </div>
             </div>
         </nav>
 
@@ -545,7 +584,12 @@
 
             <div class="hero-card">
                 <div class="screen-top">
-                    <div class="screen-title">
+                    <div class="mac-dots">
+                        <span class="dot-mac red"></span>
+                        <span class="dot-mac yellow"></span>
+                        <span class="dot-mac green"></span>
+                    </div>
+                    <div class="screen-title" style="flex: 1; margin-left: 12px;">
                         <strong>Dashboard Preview</strong>
                         <span>Ringkasan fitur administrasi kost</span>
                     </div>
