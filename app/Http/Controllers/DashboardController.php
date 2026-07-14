@@ -6,26 +6,53 @@ use App\Models\Penghuni;
 use App\Models\Pemasukan;
 use App\Models\Pengeluaran;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class DashboardController extends Controller {
-    public function index(){
-        $year = Carbon::now()->year;
+    public function index(Request $request){
+        // Filter support (Fitur 7)
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+        $selectedYear = (int) $request->input('tahun', Carbon::now()->year);
+        $selectedMonth = $request->input('bulan', 'semua');
+
+        if ($selectedMonth !== 'semua') {
+            $selectedMonth = (int) $selectedMonth;
+            if ($selectedMonth < 1 || $selectedMonth > 12) {
+                $selectedMonth = 'semua';
+            }
+        }
+
+        $year = $selectedYear;
         $totalKamar = Kamar::count();
         $totalPenghuni = Penghuni::whereNull('tanggal_keluar')->count();
-        $totalPemasukan = (float) Pemasukan::sum('jumlah');
-        $totalPengeluaran = (float) Pengeluaran::sum('jumlah');
-        $saldoBersih = $totalPemasukan - $totalPengeluaran;
         $kamarTersedia = Kamar::where('status', 'tersedia')->count();
         $kamarTerisi = Kamar::where('status', 'terisi')->count();
         $okupansi = $totalKamar > 0 ? round(($kamarTerisi / $totalKamar) * 100) : 0;
-        
+
+        // Build date range based on filter
+        if ($selectedMonth !== 'semua') {
+            $filterStart = Carbon::create($selectedYear, $selectedMonth, 1)->startOfMonth()->toDateString();
+            $filterEnd = Carbon::create($selectedYear, $selectedMonth, 1)->endOfMonth()->toDateString();
+        } else {
+            $filterStart = Carbon::create($selectedYear, 1, 1)->startOfYear()->toDateString();
+            $filterEnd = Carbon::create($selectedYear, 12, 31)->endOfYear()->toDateString();
+        }
+
+        $totalPemasukan = (float) Pemasukan::whereBetween('tanggal', [$filterStart, $filterEnd])->sum('jumlah');
+        $totalPengeluaran = (float) Pengeluaran::whereBetween('tanggal', [$filterStart, $filterEnd])->sum('jumlah');
+        $saldoBersih = $totalPemasukan - $totalPengeluaran;
+
+        // Trend calculation — current month vs previous month
         $awalBulan = Carbon::now()->startOfMonth()->toDateString();
         $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
         $awalBulanLalu = Carbon::now()->subMonth()->startOfMonth()->toDateString();
         $akhirBulanLalu = Carbon::now()->subMonth()->endOfMonth()->toDateString();
 
-        // Pemasukan & Pengeluaran bulan ini vs bulan lalu untuk hitung trend
         $pemasukanBulanIni = (float) Pemasukan::whereBetween('tanggal', [$awalBulan, $akhirBulan])->sum('jumlah');
         $pemasukanBulanLalu = (float) Pemasukan::whereBetween('tanggal', [$awalBulanLalu, $akhirBulanLalu])->sum('jumlah');
         $pengeluaranBulanIni = (float) Pengeluaran::whereBetween('tanggal', [$awalBulan, $akhirBulan])->sum('jumlah');
@@ -119,11 +146,19 @@ class DashboardController extends Controller {
             ->take(6)
             ->values();
 
+        // Available years for filter
+        $currentYear = Carbon::now()->year;
+        $availableYears = range($currentYear - 3, $currentYear + 1);
+
+        // Periode label for filter
+        $periodeLabel = ($selectedMonth === 'semua' ? 'Semua bulan' : $months[$selectedMonth]) . ' ' . $selectedYear;
+
         return view('dashboard.index', compact(
             'totalKamar', 'totalPenghuni', 'totalPemasukan', 'totalPengeluaran',
             'saldoBersih', 'kamarTersedia', 'kamarTerisi', 'okupansi',
             'chartLabels', 'chartPemasukan', 'chartPengeluaran', 'latestTransaksi', 'year',
-            'penghuniLunas', 'penghuniBelumLunas', 'trendPemasukan', 'trendPengeluaran'
+            'penghuniLunas', 'penghuniBelumLunas', 'trendPemasukan', 'trendPengeluaran',
+            'months', 'availableYears', 'selectedYear', 'selectedMonth', 'periodeLabel'
         ));
     }
 }

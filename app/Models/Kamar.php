@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Kamar extends Model {
     use SoftDeletes;
 
-    protected $fillable = ['nomor_kamar', 'tipe', 'harga', 'status'];
+    protected $fillable = ['nomor_kamar', 'tipe', 'harga', 'status', 'foto'];
 
     protected function casts(): array
     {

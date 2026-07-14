@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Penghuni;
 use App\Models\Kamar;
+use App\Models\Pemasukan;
 use App\Models\ActivityLog;
 use App\Services\TenantService;
 use App\Http\Requests\StorePenghuniRequest;
@@ -88,6 +89,25 @@ class PenghuniController extends Controller
     {
         $kamars = Kamar::available()->get();
         return view('penghuni.create', compact('kamars'));
+    }
+
+    public function show(Penghuni $penghuni)
+    {
+        $penghuni->load('kamar');
+
+        $awalBulan = Carbon::now()->startOfMonth()->toDateString();
+        $akhirBulan = Carbon::now()->endOfMonth()->toDateString();
+
+        $penghuniLunasIds = $this->tenantService->getLunasPenghuniIds($awalBulan, $akhirBulan);
+        $statusBayar = in_array($penghuni->id, $penghuniLunasIds, true) ? 'lunas' : 'belum_lunas';
+
+        $riwayatPembayaran = Pemasukan::where('penghuni_id', $penghuni->id)
+            ->orderByDesc('tanggal')
+            ->get();
+
+        $totalDibayar = $riwayatPembayaran->sum('jumlah');
+
+        return view('penghuni.show', compact('penghuni', 'statusBayar', 'riwayatPembayaran', 'totalDibayar'));
     }
 
     public function store(StorePenghuniRequest $request)

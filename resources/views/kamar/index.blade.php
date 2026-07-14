@@ -88,7 +88,11 @@
                         <td>{{ $kamars->firstItem() + $i }}</td>
                         <td>
                             <div class="table-title">
-                                <span class="row-avatar">{{ strtoupper(substr($kamar->nomor_kamar, 0, 2)) }}</span>
+                                @if($kamar->foto)
+                                    <img src="{{ asset($kamar->foto) }}" alt="Foto" style="width:32px;height:32px;border-radius:999px;object-fit:cover;flex:0 0 auto;">
+                                @else
+                                    <span class="row-avatar">{{ strtoupper(substr($kamar->nomor_kamar, 0, 2)) }}</span>
+                                @endif
                                 Kamar {{ $kamar->nomor_kamar }}
                             </div>
                         </td>
@@ -108,7 +112,7 @@
                                 <a href="{{ route('kamar.edit', $kamar) }}" class="btn-action btn-edit" title="Edit">
                                     <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                 </a>
-                                <form action="{{ route('kamar.destroy', $kamar) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kamar ini?')">
+                                <form action="{{ route('kamar.destroy', $kamar) }}" method="POST" onsubmit="return confirmDelete(this, 'Yakin ingin menghapus kamar {{ $kamar->nomor_kamar }}? Data akan dipindahkan ke Recycle Bin.')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn-action btn-delete" title="Hapus">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>

@@ -10,6 +10,8 @@ use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\RecycleBinController;
 
 Route::get('/', fn () => view('landing'))->name('landing');
 
@@ -22,7 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('kamar', KamarController::class)->except(['show']);
-    Route::resource('penghuni', PenghuniController::class)->except(['show']);
+    Route::resource('penghuni', PenghuniController::class);
     Route::resource('pemasukan', PemasukanController::class)->except(['show']);
     Route::resource('pengeluaran', PengeluaranController::class)->except(['show']);
 
@@ -38,5 +40,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profil-admin', [ProfileController::class, 'index'])->name('profil.index');
     Route::put('/profil-admin', [ProfileController::class, 'updateProfile'])->name('profil.update');
     Route::put('/profil-admin/password', [ProfileController::class, 'updatePassword'])->name('profil.password.update');
+
+    // Global Search
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+    // Recycle Bin
+    Route::get('/recycle-bin', [RecycleBinController::class, 'index'])->name('recycle-bin.index');
+    Route::post('/recycle-bin/{type}/{id}/restore', [RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
+    Route::delete('/recycle-bin/{type}/{id}', [RecycleBinController::class, 'forceDelete'])->name('recycle-bin.force-delete');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

@@ -132,10 +132,13 @@
                         </td>
                         <td>
                             <div class="action-buttons justify-content-end">
+                                <a href="{{ route('penghuni.show', $penghuni) }}" class="btn-action btn-edit" title="Detail">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
+                                </a>
                                 <a href="{{ route('penghuni.edit', $penghuni) }}" class="btn-action btn-edit" title="Edit">
                                     <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                 </a>
-                                <form action="{{ route('penghuni.destroy', $penghuni) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus penghuni ini? Status kamar akan dikembalikan menjadi tersedia.')">
+                                <form action="{{ route('penghuni.destroy', $penghuni) }}" method="POST" onsubmit="return confirmDelete(this, 'Yakin ingin menghapus penghuni {{ $penghuni->nama }}? Data akan dipindahkan ke Recycle Bin.')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn-action btn-delete" title="Hapus">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>

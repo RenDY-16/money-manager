@@ -51,7 +51,14 @@ class KamarController extends Controller
 
     public function store(StoreKamarRequest $request)
     {
-        $kamar = Kamar::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('kamar-photos', 'public');
+            $data['foto'] = 'storage/' . $path;
+        }
+
+        $kamar = Kamar::create($data);
 
         ActivityLog::log('Tambah Kamar', "Menambahkan kamar nomor {$kamar->nomor_kamar} dengan harga " . $kamar->formatted_harga);
 
@@ -65,8 +72,15 @@ class KamarController extends Controller
 
     public function update(UpdateKamarRequest $request, Kamar $kamar)
     {
+        $data = $request->validated();
         $oldNomor = $kamar->nomor_kamar;
-        $kamar->update($request->validated());
+
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('kamar-photos', 'public');
+            $data['foto'] = 'storage/' . $path;
+        }
+
+        $kamar->update($data);
 
         ActivityLog::log('Update Kamar', "Memperbarui kamar nomor {$oldNomor} menjadi {$kamar->nomor_kamar}");
 

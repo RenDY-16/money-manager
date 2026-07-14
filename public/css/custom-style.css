@@ -1197,3 +1197,241 @@
             background: var(--surface-low);
             border-color: var(--border);
         }
+
+        /* ═══════════════════════════════════════════════════
+           TOOLTIP ON METRIC CARDS (Fitur 16)
+           ═══════════════════════════════════════════════════ */
+        .has-tooltip {
+            position: relative;
+            cursor: default;
+        }
+        .has-tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.92);
+            padding: 8px 14px;
+            background: var(--text-main);
+            color: var(--surface-card);
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+            z-index: 100;
+            box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        }
+        .has-tooltip:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* ═══════════════════════════════════════════════════
+           BREADCRUMB NAVIGATION (Fitur 14)
+           ═══════════════════════════════════════════════════ */
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+        .breadcrumb-nav a {
+            color: var(--secondary);
+            transition: color .15s ease;
+        }
+        .breadcrumb-nav a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .breadcrumb-nav .breadcrumb-sep {
+            color: var(--text-muted);
+            opacity: .5;
+            font-size: 14px;
+            user-select: none;
+        }
+        .breadcrumb-nav .breadcrumb-current {
+            color: var(--text-muted);
+        }
+
+        /* ═══════════════════════════════════════════════════
+           DELETE CONFIRMATION MODAL (Fitur 15)
+           ═══════════════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-dialog-custom {
+            width: 92%;
+            max-width: 420px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, .18);
+            padding: 32px;
+            text-align: center;
+            animation: modalPopIn .3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes modalPopIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-dialog-custom .modal-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            background: var(--danger-soft);
+            color: var(--danger);
+            display: inline-grid;
+            place-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-dialog-custom .modal-icon .material-symbols-outlined {
+            font-size: 28px;
+        }
+        .modal-dialog-custom h5 {
+            margin: 0 0 8px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .modal-dialog-custom p {
+            margin: 0 0 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .modal-actions .btn-modal-cancel {
+            flex: 1;
+            min-height: 42px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface-card);
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+        .modal-actions .btn-modal-cancel:hover {
+            background: var(--surface-low);
+        }
+        .modal-actions .btn-modal-delete {
+            flex: 1;
+            min-height: 42px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+        .modal-actions .btn-modal-delete:hover {
+            background: #b91c1c;
+        }
+
+        /* ═══════════════════════════════════════════════════
+           LOADING SPINNER ON BUTTONS (Fitur 13)
+           ═══════════════════════════════════════════════════ */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: .75;
+        }
+        .btn-loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 999px;
+            animation: btnSpin .6s linear infinite;
+            margin-left: 6px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        @keyframes btnSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ═══════════════════════════════════════════════════
+           GLOBAL SEARCH DROPDOWN (Fitur 11)
+           ═══════════════════════════════════════════════════ */
+        .search-results-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            max-height: 380px;
+            overflow-y: auto;
+            background: var(--surface-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            z-index: 1100;
+            display: none;
+        }
+        .search-results-dropdown.show { display: block; }
+        .search-results-dropdown .search-group-label {
+            padding: 10px 16px 6px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-muted);
+        }
+        .search-results-dropdown .search-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 600;
+            transition: background .12s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .search-results-dropdown .search-item:hover {
+            background: var(--row-hover);
+        }
+        .search-results-dropdown .search-item .material-symbols-outlined {
+            font-size: 18px;
+            color: var(--secondary);
+        }
+        .search-results-dropdown .search-empty {
+            padding: 24px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .search-item-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }

@@ -31,7 +31,7 @@
             </div>
             <div>
                 <h5>Kost AJ Lanraki</h5>
-                <small>Management v1.0</small>
+                <small>Management v4.0</small>
             </div>
         </div>
     </div>
@@ -65,6 +65,10 @@
             <span class="material-symbols-outlined">backup</span>
             <span>Backup Data</span>
         </a>
+        <a href="{{ route('recycle-bin.index') }}" class="nav-link-sidebar {{ request()->is('recycle-bin*') ? 'active' : '' }}">
+            <span class="material-symbols-outlined">delete_sweep</span>
+            <span>Recycle Bin</span>
+        </a>
         <a href="{{ route('profil.index') }}" class="nav-link-sidebar {{ request()->is('profil-admin*') ? 'active' : '' }}" style="margin-top:auto;">
             <span class="material-symbols-outlined">person</span>
             <span>Profil Admin</span>
@@ -91,6 +95,11 @@
         <div class="topbar-title">
             <h4>@yield('title', 'Financial Management')</h4>
             <p>@yield('subtitle', 'Sistem Manajemen Keuangan Kost')</p>
+        </div>
+        <div class="topbar-search" id="globalSearchContainer">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" id="globalSearchInput" placeholder="Cari kamar, penghuni, transaksi..." autocomplete="off">
+            <div class="search-results-dropdown" id="searchResultsDropdown"></div>
         </div>
         <div class="topbar-actions">
             <div class="settings-wrapper">
@@ -154,6 +163,21 @@
 
         @yield('content')
     </main>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-dialog-custom">
+        <div class="modal-icon">
+            <span class="material-symbols-outlined">warning</span>
+        </div>
+        <h5>Konfirmasi Hapus</h5>
+        <p id="deleteModalMessage">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="closeDeleteModal()">Batal</button>
+            <button type="button" class="btn-modal-delete" id="deleteModalConfirm">Ya, Hapus</button>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -221,6 +245,103 @@
             panel.classList.remove('show');
         }
     });
+
+    // ═══ DELETE MODAL (Fitur 15) ═══
+    let pendingDeleteForm = null;
+    function confirmDelete(form, message) {
+        pendingDeleteForm = form;
+        document.getElementById('deleteModalMessage').textContent = message || 'Apakah Anda yakin ingin menghapus data ini?';
+        document.getElementById('deleteModal').classList.add('show');
+        return false;
+    }
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('show');
+        pendingDeleteForm = null;
+    }
+    document.getElementById('deleteModalConfirm').addEventListener('click', () => {
+        if (pendingDeleteForm) {
+            pendingDeleteForm.submit();
+        }
+    });
+    document.getElementById('deleteModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeDeleteModal();
+    });
+
+    // ═══ LOADING SPINNER (Fitur 13) ═══
+    document.querySelectorAll('form').forEach(form => {
+        if (form.id === 'logout-form' || form.id === 'deleteForm') return;
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"], .btn-submit, .btn-primary-custom[type="submit"]');
+            if (btn && !btn.classList.contains('btn-loading') && !form.hasAttribute('data-no-spinner')) {
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+            }
+        });
+    });
+
+    // ═══ GLOBAL SEARCH (Fitur 11) ═══
+    (function() {
+        const input = document.getElementById('globalSearchInput');
+        const dropdown = document.getElementById('searchResultsDropdown');
+        if (!input || !dropdown) return;
+
+        let debounceTimer;
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = input.value.trim();
+            if (query.length < 2) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            debounceTimer = setTimeout(() => {
+                fetch(`/search?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    const groups = [
+                        { key: 'kamar', label: 'Kamar', icon: 'bed' },
+                        { key: 'penghuni', label: 'Penghuni', icon: 'group' },
+                        { key: 'pemasukan', label: 'Pemasukan', icon: 'payments' },
+                        { key: 'pengeluaran', label: 'Pengeluaran', icon: 'account_balance_wallet' }
+                    ];
+                    let hasResults = false;
+                    groups.forEach(g => {
+                        if (data[g.key] && data[g.key].length > 0) {
+                            hasResults = true;
+                            html += `<div class="search-group-label">${g.label}</div>`;
+                            data[g.key].forEach(item => {
+                                html += `<a href="${item.url}" class="search-item">`
+                                    + `<span class="material-symbols-outlined">${g.icon}</span>`
+                                    + `<div><div>${item.title}</div><div class="search-item-sub">${item.subtitle}</div></div>`
+                                    + `</a>`;
+                            });
+                        }
+                    });
+                    if (!hasResults) html = '<div class="search-empty">Tidak ada hasil untuk "' + query + '"</div>';
+                    dropdown.innerHTML = html;
+                    dropdown.classList.add('show');
+                })
+                .catch(() => {
+                    dropdown.innerHTML = '<div class="search-empty">Gagal memuat hasil pencarian</div>';
+                    dropdown.classList.add('show');
+                });
+            }, 300);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#globalSearchContainer')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        input.addEventListener('focus', () => {
+            if (dropdown.innerHTML.trim() && input.value.trim().length >= 2) {
+                dropdown.classList.add('show');
+            }
+        });
+    })();
 </script>
 @stack('scripts')
 </body>

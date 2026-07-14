@@ -18,6 +18,7 @@ class StoreKamarRequest extends FormRequest
             'tipe' => 'required|in:single,double',
             'harga' => 'required|numeric|min:0',
             'status' => 'required|in:tersedia,terisi',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ];
     }
 }
