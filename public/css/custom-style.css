@@ -61,31 +61,31 @@
         }
 
         body[data-theme="neon"] {
-            --primary: #06b6d4;
-            --primary-container: rgba(6, 182, 212, 0.25);
-            --secondary: #a855f7;
-            --secondary-soft: rgba(168, 85, 247, 0.2);
-            --surface: #020617;
-            --surface-card: rgba(15, 23, 42, 0.65);
-            --surface-low: rgba(2, 6, 23, 0.75);
-            --surface-high: rgba(30, 41, 59, 0.85);
-            --input-bg: rgba(2, 6, 23, 0.7);
-            --input-text: #f8fafc;
+            --primary: #00f0ff;
+            --primary-container: rgba(0, 240, 255, 0.25);
+            --secondary: #9d4edd;
+            --secondary-soft: rgba(157, 78, 221, 0.2);
+            --surface: #030712;
+            --surface-card: rgba(10, 15, 30, 0.65);
+            --surface-low: rgba(3, 7, 18, 0.8);
+            --surface-high: rgba(15, 23, 42, 0.85);
+            --input-bg: rgba(3, 7, 18, 0.75);
+            --input-text: #ffffff;
             --input-placeholder: #64748b;
-            --row-hover: rgba(6, 182, 212, 0.1);
-            --text-main: #f8fafc;
+            --row-hover: rgba(0, 240, 255, 0.12);
+            --text-main: #ffffff;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.12);
-            --border-strong: rgba(6, 182, 212, 0.45);
+            --border: rgba(0, 240, 255, 0.15);
+            --border-strong: rgba(0, 240, 255, 0.5);
             --success: #10b981;
             --success-soft: rgba(16, 185, 129, 0.2);
             --danger: #f43f5e;
             --danger-soft: rgba(244, 63, 94, 0.2);
             --warning: #f59e0b;
             --warning-soft: rgba(245, 158, 11, 0.2);
-            --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.4);
-            --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.15);
-            --shadow-hover: 0 0 25px rgba(6, 182, 212, 0.35), 0 12px 35px rgba(0, 0, 0, 0.6);
+            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 240, 255, 0.2);
+            --shadow-hover: 0 0 35px rgba(0, 240, 255, 0.4), 0 0 20px rgba(157, 78, 221, 0.3), 0 15px 40px rgba(0, 0, 0, 0.7);
         }
 
         body[data-theme="green"] {
@@ -1491,6 +1491,90 @@ body[data-theme="dark"] .neon-ambient-bg {
     display: block;
 }
 
+/* 3D Floating Tech Sphere Canvas Animation Elements */
+.tech-3d-sphere-container {
+    position: absolute;
+    top: 10%;
+    right: 3%;
+    width: 480px;
+    height: 480px;
+    perspective: 1000px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.75;
+}
+
+.tech-3d-sphere {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(0, 240, 255, 0.95), rgba(157, 78, 221, 0.75) 45%, rgba(3, 7, 18, 0.98) 85%);
+    box-shadow: 
+        inset 0 0 50px rgba(255, 255, 255, 0.4),
+        inset -20px -20px 80px rgba(0, 0, 0, 0.95),
+        0 0 60px rgba(0, 240, 255, 0.6),
+        0 0 130px rgba(157, 78, 221, 0.4);
+    backdrop-filter: blur(10px);
+    animation: sphere-pulse-float 12s infinite ease-in-out;
+}
+
+.tech-3d-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0, 240, 255, 0.45);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.45);
+    transform-style: preserve-3d;
+}
+
+.tech-3d-ring.ring-1 {
+    width: 560px;
+    height: 560px;
+    margin-top: -280px;
+    margin-left: -280px;
+    border-color: rgba(0, 240, 255, 0.55);
+    animation: rotate-ring-1 16s linear infinite;
+}
+
+.tech-3d-ring.ring-2 {
+    width: 640px;
+    height: 640px;
+    margin-top: -320px;
+    margin-left: -320px;
+    border-color: rgba(157, 78, 221, 0.55);
+    animation: rotate-ring-2 22s linear infinite reverse;
+}
+
+.tech-3d-ring.ring-3 {
+    width: 400px;
+    height: 400px;
+    margin-top: -200px;
+    margin-left: -200px;
+    border-color: rgba(255, 255, 255, 0.35);
+    animation: rotate-ring-3 10s linear infinite;
+}
+
+@keyframes sphere-pulse-float {
+    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+    50% { transform: translateY(-25px) rotate(180deg) scale(1.05); }
+}
+
+@keyframes rotate-ring-1 {
+    0% { transform: rotateX(65deg) rotateY(25deg) rotateZ(0deg); }
+    100% { transform: rotateX(65deg) rotateY(25deg) rotateZ(360deg); }
+}
+
+@keyframes rotate-ring-2 {
+    0% { transform: rotateX(-45deg) rotateY(45deg) rotateZ(0deg); }
+    100% { transform: rotateX(-45deg) rotateY(45deg) rotateZ(360deg); }
+}
+
+@keyframes rotate-ring-3 {
+    0% { transform: rotateX(75deg) rotateY(-15deg) rotateZ(0deg); }
+    100% { transform: rotateX(75deg) rotateY(-15deg) rotateZ(360deg); }
+}
+
 .ambient-orb {
     position: absolute;
     border-radius: 50%;
@@ -1744,4 +1828,82 @@ body[data-theme="neon"] .toast-item {
     box-shadow: 0 0 20px rgba(6, 182, 212, 0.25) !important;
     color: #f8fafc !important;
     border-radius: 14px !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   INTERACTIVE 3D COMPONENT DEPTH SYSTEM
+   ═══════════════════════════════════════════════════ */
+
+body[data-theme="neon"] {
+    perspective: 1200px;
+}
+
+body[data-theme="neon"] .stat-card,
+body[data-theme="neon"] .metric-card,
+body[data-theme="neon"] .card,
+body[data-theme="neon"] .card-custom,
+body[data-theme="neon"] .filter-card {
+    transform-style: preserve-3d !important;
+    transition: transform 0.15s ease-out, box-shadow 0.25s ease, border-color 0.25s ease !important;
+    will-change: transform;
+}
+
+body[data-theme="neon"] .stat-card .material-symbols-outlined,
+body[data-theme="neon"] .metric-card .material-symbols-outlined,
+body[data-theme="neon"] .stat-card h3,
+body[data-theme="neon"] .metric-card h3,
+body[data-theme="neon"] .card h5 {
+    transform: translateZ(24px) !important;
+    transition: transform 0.25s ease !important;
+    display: inline-block;
+}
+
+body[data-theme="neon"] .btn,
+body[data-theme="neon"] .btn-primary-custom,
+body[data-theme="neon"] .btn-success-custom,
+body[data-theme="neon"] .btn-modal-delete {
+    transform-style: preserve-3d !important;
+    transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.25s ease !important;
+}
+
+body[data-theme="neon"] .btn:hover,
+body[data-theme="neon"] .btn-primary-custom:hover,
+body[data-theme="neon"] .btn-success-custom:hover,
+body[data-theme="neon"] .btn-modal-delete:hover {
+    transform: perspective(600px) translateZ(8px) scale(1.02) !important;
+}
+
+body[data-theme="neon"] .btn:active,
+body[data-theme="neon"] .btn-primary-custom:active,
+body[data-theme="neon"] .btn-success-custom:active,
+body[data-theme="neon"] .btn-modal-delete:active {
+    transform: perspective(600px) translateZ(-6px) scale(0.97) !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
+}
+
+body[data-theme="neon"] .table tbody tr {
+    transform-style: preserve-3d !important;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+body[data-theme="neon"] .table tbody tr:hover {
+    transform: perspective(800px) translateZ(6px) scale(1.005) !important;
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15) !important;
+    position: relative;
+    z-index: 5;
+}
+
+.modal-overlay.show .modal-dialog-custom {
+    animation: modal-3d-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes modal-3d-enter {
+    0% {
+        opacity: 0;
+        transform: perspective(1000px) rotateX(-20deg) translateZ(-100px) scale(0.85);
+    }
+    100% {
+        opacity: 1;
+        transform: perspective(1000px) rotateX(0deg) translateZ(0px) scale(1);
+    }
 }

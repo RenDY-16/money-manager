@@ -22,8 +22,14 @@
     })();
 </script>
 
-<!-- Neon Ambient Glowing Background -->
+<!-- Futuristic 3D Tech Ambient Background Canvas -->
 <div class="neon-ambient-bg">
+    <div class="tech-3d-sphere-container">
+        <div class="tech-3d-sphere"></div>
+        <div class="tech-3d-ring ring-1"></div>
+        <div class="tech-3d-ring ring-2"></div>
+        <div class="tech-3d-ring ring-3"></div>
+    </div>
     <div class="ambient-orb ambient-orb-1"></div>
     <div class="ambient-orb ambient-orb-2"></div>
     <div class="ambient-orb ambient-orb-3"></div>
@@ -351,6 +357,68 @@
                 dropdown.classList.add('show');
             }
         });
+    })();
+
+    // ═══ INTERACTIVE 3D MOUSE PARALLAX & TILT SYSTEM ═══
+    (function() {
+        // 1. Mouse Parallax on 3D Background Sphere
+        const sphereContainer = document.querySelector('.tech-3d-sphere-container');
+        let mouseX = 0, mouseY = 0;
+        let currentX = 0, currentY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            mouseX = (e.clientX - windowWidth / 2) / (windowWidth / 2);
+            mouseY = (e.clientY - windowHeight / 2) / (windowHeight / 2);
+        });
+
+        function animateParallax() {
+            currentX += (mouseX - currentX) * 0.05;
+            currentY += (mouseY - currentY) * 0.05;
+
+            if (sphereContainer && document.body.dataset.theme === 'neon') {
+                const moveX = currentX * 45;
+                const moveY = currentY * 45;
+                const rotX = currentY * -25;
+                const rotY = currentX * 25;
+                sphereContainer.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+            }
+            requestAnimationFrame(animateParallax);
+        }
+        animateParallax();
+
+        // 2. Interactive 3D Card Tilt Effect
+        function initInteractive3DTilt() {
+            const cards = document.querySelectorAll('.stat-card, .metric-card, .card, .card-custom, .filter-card');
+            
+            cards.forEach(card => {
+                if (card.dataset.tiltInitialized) return;
+                card.dataset.tiltInitialized = 'true';
+                
+                card.addEventListener('mousemove', (e) => {
+                    if (document.body.dataset.theme !== 'neon') return;
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -14;
+                    const rotateY = ((x - centerX) / centerX) * 14;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(14px) scale3d(1.02, 1.02, 1.02)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px) scale3d(1, 1, 1)';
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initInteractive3DTilt);
+        const observer = new MutationObserver(initInteractive3DTilt);
+        observer.observe(document.body, { childList: true, subtree: true });
     })();
 </script>
 @stack('scripts')
