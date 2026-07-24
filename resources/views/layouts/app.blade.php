@@ -12,15 +12,24 @@
     <link href="{{ asset('css/custom-style.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
-<body data-theme="light" data-density="comfortable">
+<body data-theme="neon" data-density="comfortable">
 <script>
     (function() {
-        const theme = localStorage.getItem('kostAjTheme') || 'light';
+        const theme = localStorage.getItem('kostAjTheme') || 'neon';
         const density = localStorage.getItem('kostAjDensity') || 'comfortable';
         document.body.setAttribute('data-theme', theme);
         document.body.setAttribute('data-density', density);
     })();
 </script>
+
+<!-- Neon Ambient Glowing Background -->
+<div class="neon-ambient-bg">
+    <div class="ambient-orb ambient-orb-1"></div>
+    <div class="ambient-orb ambient-orb-2"></div>
+    <div class="ambient-orb ambient-orb-3"></div>
+    <div class="ambient-grid-overlay"></div>
+</div>
+
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <aside class="sidebar" id="sidebar">
@@ -112,8 +121,9 @@
 
                     <span class="settings-label">Tema</span>
                     <div class="settings-options">
-                        <button type="button" class="theme-option" data-theme="light" onclick="setTheme('light')">Terang</button>
+                        <button type="button" class="theme-option" data-theme="neon" onclick="setTheme('neon')">Neon Glass</button>
                         <button type="button" class="theme-option" data-theme="dark" onclick="setTheme('dark')">Gelap</button>
+                        <button type="button" class="theme-option" data-theme="light" onclick="setTheme('light')">Terang</button>
                         <button type="button" class="theme-option" data-theme="green" onclick="setTheme('green')">Hijau</button>
                     </div>
 
@@ -226,7 +236,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.body.dataset.theme = localStorage.getItem('kostAjTheme') || 'light';
+        document.body.dataset.theme = localStorage.getItem('kostAjTheme') || 'neon';
         document.body.dataset.density = localStorage.getItem('kostAjDensity') || 'comfortable';
         refreshSettingsState();
 

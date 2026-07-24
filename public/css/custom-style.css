@@ -60,6 +60,34 @@
             --shadow-md: 0 14px 24px -12px rgba(255, 255, 255, 0.12);
         }
 
+        body[data-theme="neon"] {
+            --primary: #06b6d4;
+            --primary-container: rgba(6, 182, 212, 0.25);
+            --secondary: #a855f7;
+            --secondary-soft: rgba(168, 85, 247, 0.2);
+            --surface: #020617;
+            --surface-card: rgba(15, 23, 42, 0.65);
+            --surface-low: rgba(2, 6, 23, 0.75);
+            --surface-high: rgba(30, 41, 59, 0.85);
+            --input-bg: rgba(2, 6, 23, 0.7);
+            --input-text: #f8fafc;
+            --input-placeholder: #64748b;
+            --row-hover: rgba(6, 182, 212, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.12);
+            --border-strong: rgba(6, 182, 212, 0.45);
+            --success: #10b981;
+            --success-soft: rgba(16, 185, 129, 0.2);
+            --danger: #f43f5e;
+            --danger-soft: rgba(244, 63, 94, 0.2);
+            --warning: #f59e0b;
+            --warning-soft: rgba(245, 158, 11, 0.2);
+            --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.15);
+            --shadow-hover: 0 0 25px rgba(6, 182, 212, 0.35), 0 12px 35px rgba(0, 0, 0, 0.6);
+        }
+
         body[data-theme="green"] {
             --primary: #064e3b;
             --primary-container: #047857;
@@ -1443,3 +1471,277 @@
             color: var(--text-muted);
             font-weight: 500;
         }
+
+/* ═══════════════════════════════════════════════════
+   NEON GLASS EFFECT DESIGN SYSTEM
+   ═══════════════════════════════════════════════════ */
+
+/* Ambient Glowing Background Orbs */
+.neon-ambient-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    display: none;
+}
+
+body[data-theme="neon"] .neon-ambient-bg,
+body[data-theme="dark"] .neon-ambient-bg {
+    display: block;
+}
+
+.ambient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.ambient-orb-1 {
+    top: -100px;
+    left: -100px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.8), transparent 70%);
+    animation: orb-float-1 15s infinite ease-in-out;
+}
+
+.ambient-orb-2 {
+    top: 40%;
+    right: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.7), transparent 70%);
+    animation: orb-float-2 18s infinite ease-in-out;
+}
+
+.ambient-orb-3 {
+    bottom: -100px;
+    left: 30%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.7), transparent 70%);
+    animation: orb-float-1 20s infinite ease-in-out reverse;
+}
+
+.ambient-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 4rem 4rem;
+}
+
+@keyframes orb-float-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, -50px) scale(1.1); }
+}
+
+@keyframes orb-float-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-50px, 40px) scale(0.95); }
+}
+
+/* Neon Glassmorphism Component Enhancements for body[data-theme="neon"] */
+body[data-theme="neon"] {
+    background: #020617 !important;
+    color: #f8fafc !important;
+}
+
+body[data-theme="neon"] .sidebar {
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-theme="neon"] .sidebar-brand {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-theme="neon"] .sidebar-brand h5 {
+    color: #f8fafc !important;
+    background: linear-gradient(to right, #22d3ee, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+body[data-theme="neon"] .topbar {
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-theme="neon"] .topbar-title h4 {
+    color: #f8fafc !important;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+body[data-theme="neon"] .topbar-title p {
+    color: #94a3b8 !important;
+}
+
+body[data-theme="neon"] .stat-card,
+body[data-theme="neon"] .metric-card,
+body[data-theme="neon"] .card,
+body[data-theme="neon"] .card-custom,
+body[data-theme="neon"] .filter-card,
+body[data-theme="neon"] .settings-panel,
+body[data-theme="neon"] .modal-dialog-custom,
+body[data-theme="neon"] .search-results-dropdown {
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(6, 182, 212, 0.08) !important;
+    border-radius: 16px !important;
+}
+
+body[data-theme="neon"] .stat-card:hover,
+body[data-theme="neon"] .metric-card:hover,
+body[data-theme="neon"] .card:hover {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.3), 0 12px 35px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-3px) !important;
+}
+
+body[data-theme="neon"] .nav-link-sidebar {
+    color: #94a3b8 !important;
+    border-radius: 12px !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="neon"] .nav-link-sidebar:hover {
+    color: #22d3ee !important;
+    background: rgba(6, 182, 212, 0.12) !important;
+}
+
+body[data-theme="neon"] .nav-link-sidebar.active {
+    color: #22d3ee !important;
+    background: rgba(6, 182, 212, 0.2) !important;
+    border-left: 3px solid #06b6d4 !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.35) !important;
+}
+
+body[data-theme="neon"] .form-control,
+body[data-theme="neon"] .form-select,
+body[data-theme="neon"] .topbar-search input {
+    background: rgba(2, 6, 23, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 12px !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="neon"] .form-control:focus,
+body[data-theme="neon"] .form-select:focus,
+body[data-theme="neon"] .topbar-search input:focus {
+    border-color: #06b6d4 !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
+    background: rgba(2, 6, 23, 0.85) !important;
+    outline: none !important;
+}
+
+body[data-theme="neon"] .btn-primary,
+body[data-theme="neon"] .btn-primary-custom {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.85), rgba(168, 85, 247, 0.85)) !important;
+    border: 1px solid rgba(6, 182, 212, 0.6) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+body[data-theme="neon"] .btn-primary:hover,
+body[data-theme="neon"] .btn-primary-custom:hover {
+    background: linear-gradient(135deg, #06b6d4, #a855f7) !important;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.75) !important;
+    transform: translateY(-1px) !important;
+}
+
+body[data-theme="neon"] .btn-secondary {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #cbd5e1 !important;
+    border-radius: 12px !important;
+}
+
+body[data-theme="neon"] .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+body[data-theme="neon"] .btn-success,
+body[data-theme="neon"] .btn-success-custom {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border: 1px solid rgba(16, 185, 129, 0.5) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2) !important;
+    border-radius: 12px !important;
+}
+
+body[data-theme="neon"] .btn-success:hover,
+body[data-theme="neon"] .btn-success-custom:hover {
+    background: rgba(16, 185, 129, 0.85) !important;
+    color: #020617 !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.75) !important;
+}
+
+body[data-theme="neon"] .btn-danger,
+body[data-theme="neon"] .btn-modal-delete {
+    background: rgba(244, 63, 94, 0.2) !important;
+    border: 1px solid rgba(244, 63, 94, 0.5) !important;
+    color: #fb7185 !important;
+    box-shadow: 0 0 12px rgba(244, 63, 94, 0.2) !important;
+    border-radius: 12px !important;
+}
+
+body[data-theme="neon"] .btn-danger:hover,
+body[data-theme="neon"] .btn-modal-delete:hover {
+    background: rgba(244, 63, 94, 0.85) !important;
+    color: #020617 !important;
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.75) !important;
+}
+
+body[data-theme="neon"] .table {
+    --bs-table-bg: transparent !important;
+    color: #f8fafc !important;
+}
+
+body[data-theme="neon"] .table thead th {
+    background: rgba(2, 6, 23, 0.6) !important;
+    color: #22d3ee !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+body[data-theme="neon"] .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.2s ease !important;
+}
+
+body[data-theme="neon"] .table tbody tr:hover {
+    background: rgba(6, 182, 212, 0.08) !important;
+}
+
+body[data-theme="neon"] .badge-status,
+body[data-theme="neon"] .badge {
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+body[data-theme="neon"] .toast-item {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.25) !important;
+    color: #f8fafc !important;
+    border-radius: 14px !important;
+}
