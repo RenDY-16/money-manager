@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link href="{{ asset('css/custom-style.css') }}" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     @stack('styles')
 </head>
 <body data-theme="neon" data-density="comfortable">
@@ -22,17 +23,9 @@
     })();
 </script>
 
-<!-- Futuristic 3D Tech Ambient Background Canvas -->
-<div class="neon-ambient-bg">
-    <div class="tech-3d-sphere-container">
-        <div class="tech-3d-sphere"></div>
-        <div class="tech-3d-ring ring-1"></div>
-        <div class="tech-3d-ring ring-2"></div>
-        <div class="tech-3d-ring ring-3"></div>
-    </div>
-    <div class="ambient-orb ambient-orb-1"></div>
-    <div class="ambient-orb ambient-orb-2"></div>
-    <div class="ambient-orb ambient-orb-3"></div>
+<!-- Photorealistic Three.js WebGL 3D Canvas Background -->
+<div class="three-canvas-wrapper" id="threeCanvasWrapper">
+    <canvas id="three-bg-canvas"></canvas>
     <div class="ambient-grid-overlay"></div>
 </div>
 
@@ -359,36 +352,228 @@
         });
     })();
 
-    // ═══ INTERACTIVE 3D MOUSE PARALLAX & TILT SYSTEM ═══
+    // ═══ PHOTOREALISTIC THREE.JS WEBGL 3D CANVAS & LIGHTING ═══
     (function() {
-        // 1. Mouse Parallax on 3D Background Sphere
-        const sphereContainer = document.querySelector('.tech-3d-sphere-container');
-        let mouseX = 0, mouseY = 0;
-        let currentX = 0, currentY = 0;
+        if (typeof THREE === 'undefined') return;
+        const canvas = document.getElementById('three-bg-canvas');
+        if (!canvas) return;
 
-        document.addEventListener('mousemove', (e) => {
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            mouseX = (e.clientX - windowWidth / 2) / (windowWidth / 2);
-            mouseY = (e.clientY - windowHeight / 2) / (windowHeight / 2);
+        // === RENDERER ===
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.4;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030712, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 12);
+
+        // === MAIN 3D GROUP ===
+        const mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        // -- OUTER WIREFRAME ICOSAHEDRON --
+        const icoGeo = new THREE.IcosahedronGeometry(2.8, 3);
+        const icoMat = new THREE.MeshStandardMaterial({
+            color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.18,
+            roughness: 0.05, metalness: 1.0
+        });
+        const icoMesh = new THREE.Mesh(icoGeo, icoMat);
+        mainGroup.add(icoMesh);
+
+        // -- SECOND OUTER SHELL (faint dodecahedron) --
+        const shellGeo = new THREE.DodecahedronGeometry(3.4, 1);
+        const shellMat = new THREE.MeshStandardMaterial({
+            color: 0x9d4edd, wireframe: true, transparent: true, opacity: 0.08,
+            roughness: 0.1, metalness: 0.9
+        });
+        const shellMesh = new THREE.Mesh(shellGeo, shellMat);
+        mainGroup.add(shellMesh);
+
+        // -- INNER SPECULAR GLASS CORE --
+        const coreGeo = new THREE.SphereGeometry(1.85, 128, 128);
+        const coreMat = new THREE.MeshPhysicalMaterial({
+            color: 0x0a1428, emissive: 0x0d0620, emissiveIntensity: 0.35,
+            roughness: 0.08, metalness: 0.92,
+            clearcoat: 1.0, clearcoatRoughness: 0.05,
+            reflectivity: 1.0, transparent: true, opacity: 0.9,
+            envMapIntensity: 2.0
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        mainGroup.add(coreMesh);
+
+        // -- INNER GLOW SHELL (emissive fresnel-like) --
+        const glowGeo = new THREE.SphereGeometry(2.05, 64, 64);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff, transparent: true, opacity: 0.06,
+            blending: THREE.AdditiveBlending, side: THREE.BackSide
+        });
+        const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+        mainGroup.add(glowMesh);
+
+        // -- LARGE OUTER GLOW AURA --
+        const auraGeo = new THREE.SphereGeometry(4.5, 32, 32);
+        const auraMat = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff, transparent: true, opacity: 0.025,
+            blending: THREE.AdditiveBlending, side: THREE.BackSide
+        });
+        const auraMesh = new THREE.Mesh(auraGeo, auraMat);
+        mainGroup.add(auraMesh);
+
+        // === ORBITAL TORUS RINGS ===
+        function createRing(radius, tube, color, emissiveIntensity) {
+            const geo = new THREE.TorusGeometry(radius, tube, 24, 200);
+            const mat = new THREE.MeshStandardMaterial({
+                color, emissive: color, emissiveIntensity,
+                roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.7
+            });
+            return new THREE.Mesh(geo, mat);
+        }
+        const ring1 = createRing(3.8, 0.018, 0x00f0ff, 1.2);
+        ring1.rotation.x = 1.1;
+        ring1.rotation.y = 0.3;
+        mainGroup.add(ring1);
+
+        const ring2 = createRing(4.5, 0.012, 0x9d4edd, 1.0);
+        ring2.rotation.x = -0.7;
+        ring2.rotation.y = 0.8;
+        mainGroup.add(ring2);
+
+        const ring3 = createRing(3.2, 0.008, 0xe0aaff, 0.8);
+        ring3.rotation.x = 0.5;
+        ring3.rotation.z = 1.2;
+        mainGroup.add(ring3);
+
+        // === POSITION GROUP ===
+        function updateGroupPosition() {
+            mainGroup.position.set(window.innerWidth > 992 ? 3.2 : 0, window.innerWidth > 992 ? 0.3 : 1.5, window.innerWidth > 992 ? 0 : -3);
+        }
+        updateGroupPosition();
+
+        // === MULTI-DEPTH PARTICLE SYSTEMS ===
+        function createParticles(count, spread, size, color, opacity) {
+            const pos = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * spread;
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({
+                size, color, transparent: true, opacity,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            return new THREE.Points(geo, mat);
+        }
+        const nearParticles = createParticles(300, 25, 0.04, 0x00f0ff, 0.7);
+        const farParticles = createParticles(600, 50, 0.025, 0x9d4edd, 0.3);
+        const dustParticles = createParticles(200, 15, 0.06, 0xffffff, 0.15);
+        scene.add(nearParticles, farParticles, dustParticles);
+
+        // === DYNAMIC LIGHTING RIG ===
+        scene.add(new THREE.AmbientLight(0x080c18, 3.0));
+
+        const cyanKey = new THREE.PointLight(0x00f0ff, 6, 40);
+        cyanKey.position.set(5, 5, 8);
+        scene.add(cyanKey);
+
+        const purpleFill = new THREE.PointLight(0x9d4edd, 5, 35);
+        purpleFill.position.set(-5, -4, 6);
+        scene.add(purpleFill);
+
+        const whiteRim = new THREE.PointLight(0xffffff, 2.5, 25);
+        whiteRim.position.set(0, 6, -4);
+        scene.add(whiteRim);
+
+        const mouseLight = new THREE.PointLight(0xe0f8ff, 3.0, 20);
+        scene.add(mouseLight);
+
+        // Orbiting accent light
+        const orbitLight = new THREE.PointLight(0x00f0ff, 2.0, 15);
+        scene.add(orbitLight);
+
+        // === MOUSE INTERACTION (SPRING PHYSICS) ===
+        let mouseX = 0, mouseY = 0, springX = 0, springY = 0, velX = 0, velY = 0;
+        const stiffness = 0.015, damping = 0.88;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
         });
 
-        function animateParallax() {
-            currentX += (mouseX - currentX) * 0.05;
-            currentY += (mouseY - currentY) * 0.05;
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            updateGroupPosition();
+        });
 
-            if (sphereContainer && document.body.dataset.theme === 'neon') {
-                const moveX = currentX * 45;
-                const moveY = currentY * 45;
-                const rotX = currentY * -25;
-                const rotY = currentX * 25;
-                sphereContainer.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        // === ANIMATION LOOP ===
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (document.body.dataset.theme !== 'neon') {
+                canvas.style.display = 'none';
+                return;
             }
-            requestAnimationFrame(animateParallax);
-        }
-        animateParallax();
+            canvas.style.display = 'block';
 
-        // 2. Interactive 3D Card Tilt Effect
+            const t = clock.getElapsedTime();
+
+            // Spring physics mouse damping
+            velX += (mouseX - springX) * stiffness;
+            velY += (mouseY - springY) * stiffness;
+            velX *= damping;
+            velY *= damping;
+            springX += velX;
+            springY += velY;
+
+            // Mouse light follows cursor
+            mouseLight.position.set(springX * 8, -springY * 8, 5);
+
+            // Orbiting accent light
+            orbitLight.position.set(Math.cos(t * 0.5) * 6, Math.sin(t * 0.7) * 4, Math.sin(t * 0.3) * 5 + 3);
+
+            // Object self-rotations
+            icoMesh.rotation.y = t * 0.12;
+            icoMesh.rotation.x = t * 0.08;
+            shellMesh.rotation.y = -t * 0.06;
+            shellMesh.rotation.z = t * 0.04;
+            coreMesh.rotation.y = -t * 0.08;
+            glowMesh.rotation.y = t * 0.05;
+
+            ring1.rotation.z = t * 0.18;
+            ring2.rotation.z = -t * 0.12;
+            ring3.rotation.z = t * 0.25;
+
+            // Breathing scale pulse
+            const breathe = 1 + Math.sin(t * 0.8) * 0.02;
+            mainGroup.scale.setScalar(breathe);
+
+            // Spring parallax group rotation
+            mainGroup.rotation.y = springX * 0.4;
+            mainGroup.rotation.x = -springY * 0.35;
+
+            // Particle drift
+            nearParticles.rotation.y = t * 0.025;
+            nearParticles.rotation.x = t * 0.01;
+            farParticles.rotation.y = -t * 0.012;
+            dustParticles.rotation.z = t * 0.008;
+
+            // Glow intensity pulse
+            glowMat.opacity = 0.04 + Math.sin(t * 1.2) * 0.03;
+            auraMat.opacity = 0.02 + Math.sin(t * 0.6) * 0.015;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+    })();
+
+    // ═══ REALISTIC SUBTLE 3D CARD TILT ═══
+    (function() {
         function initInteractive3DTilt() {
             const cards = document.querySelectorAll('.stat-card, .metric-card, .card, .card-custom, .filter-card');
             
@@ -404,14 +589,14 @@
                     const centerX = rect.width / 2;
                     const centerY = rect.height / 2;
                     
-                    const rotateX = ((y - centerY) / centerY) * -14;
-                    const rotateY = ((x - centerX) / centerX) * 14;
+                    const rotateX = ((y - centerY) / centerY) * -7;
+                    const rotateY = ((x - centerX) / centerX) * 7;
 
-                    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(14px) scale3d(1.02, 1.02, 1.02)`;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(8px)`;
                 });
 
                 card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px) scale3d(1, 1, 1)';
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
                 });
             });
         }

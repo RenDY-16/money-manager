@@ -1476,8 +1476,8 @@
    NEON GLASS EFFECT DESIGN SYSTEM
    ═══════════════════════════════════════════════════ */
 
-/* Ambient Glowing Background Orbs */
-.neon-ambient-bg {
+/* Photorealistic Three.js WebGL 3D Canvas Background */
+.three-canvas-wrapper {
     position: fixed;
     inset: 0;
     pointer-events: none;
@@ -1486,128 +1486,16 @@
     display: none;
 }
 
-body[data-theme="neon"] .neon-ambient-bg,
-body[data-theme="dark"] .neon-ambient-bg {
+body[data-theme="neon"] .three-canvas-wrapper {
     display: block;
 }
 
-/* 3D Floating Tech Sphere Canvas Animation Elements */
-.tech-3d-sphere-container {
+#three-bg-canvas {
     position: absolute;
-    top: 10%;
-    right: 3%;
-    width: 480px;
-    height: 480px;
-    perspective: 1000px;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.75;
-}
-
-.tech-3d-sphere {
+    inset: 0;
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, rgba(0, 240, 255, 0.95), rgba(157, 78, 221, 0.75) 45%, rgba(3, 7, 18, 0.98) 85%);
-    box-shadow: 
-        inset 0 0 50px rgba(255, 255, 255, 0.4),
-        inset -20px -20px 80px rgba(0, 0, 0, 0.95),
-        0 0 60px rgba(0, 240, 255, 0.6),
-        0 0 130px rgba(157, 78, 221, 0.4);
-    backdrop-filter: blur(10px);
-    animation: sphere-pulse-float 12s infinite ease-in-out;
-}
-
-.tech-3d-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    border-radius: 50%;
-    border: 1.5px solid rgba(0, 240, 255, 0.45);
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.45);
-    transform-style: preserve-3d;
-}
-
-.tech-3d-ring.ring-1 {
-    width: 560px;
-    height: 560px;
-    margin-top: -280px;
-    margin-left: -280px;
-    border-color: rgba(0, 240, 255, 0.55);
-    animation: rotate-ring-1 16s linear infinite;
-}
-
-.tech-3d-ring.ring-2 {
-    width: 640px;
-    height: 640px;
-    margin-top: -320px;
-    margin-left: -320px;
-    border-color: rgba(157, 78, 221, 0.55);
-    animation: rotate-ring-2 22s linear infinite reverse;
-}
-
-.tech-3d-ring.ring-3 {
-    width: 400px;
-    height: 400px;
-    margin-top: -200px;
-    margin-left: -200px;
-    border-color: rgba(255, 255, 255, 0.35);
-    animation: rotate-ring-3 10s linear infinite;
-}
-
-@keyframes sphere-pulse-float {
-    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-    50% { transform: translateY(-25px) rotate(180deg) scale(1.05); }
-}
-
-@keyframes rotate-ring-1 {
-    0% { transform: rotateX(65deg) rotateY(25deg) rotateZ(0deg); }
-    100% { transform: rotateX(65deg) rotateY(25deg) rotateZ(360deg); }
-}
-
-@keyframes rotate-ring-2 {
-    0% { transform: rotateX(-45deg) rotateY(45deg) rotateZ(0deg); }
-    100% { transform: rotateX(-45deg) rotateY(45deg) rotateZ(360deg); }
-}
-
-@keyframes rotate-ring-3 {
-    0% { transform: rotateX(75deg) rotateY(-15deg) rotateZ(0deg); }
-    100% { transform: rotateX(75deg) rotateY(-15deg) rotateZ(360deg); }
-}
-
-.ambient-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.35;
     pointer-events: none;
-}
-
-.ambient-orb-1 {
-    top: -100px;
-    left: -100px;
-    width: 450px;
-    height: 450px;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.8), transparent 70%);
-    animation: orb-float-1 15s infinite ease-in-out;
-}
-
-.ambient-orb-2 {
-    top: 40%;
-    right: -100px;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.7), transparent 70%);
-    animation: orb-float-2 18s infinite ease-in-out;
-}
-
-.ambient-orb-3 {
-    bottom: -100px;
-    left: 30%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(79, 70, 229, 0.7), transparent 70%);
-    animation: orb-float-1 20s infinite ease-in-out reverse;
 }
 
 .ambient-grid-overlay {
@@ -1616,29 +1504,20 @@ body[data-theme="dark"] .neon-ambient-bg {
     background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
                       linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 4rem 4rem;
-}
-
-@keyframes orb-float-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(40px, -50px) scale(1.1); }
-}
-
-@keyframes orb-float-2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-50px, 40px) scale(0.95); }
+    pointer-events: none;
 }
 
 /* Neon Glassmorphism Component Enhancements for body[data-theme="neon"] */
 body[data-theme="neon"] {
-    background: #020617 !important;
-    color: #f8fafc !important;
+    background: #030712 !important;
+    color: #ffffff !important;
 }
 
 body[data-theme="neon"] .sidebar {
-    background: rgba(15, 23, 42, 0.65) !important;
+    background: rgba(10, 15, 30, 0.5) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 body[data-theme="neon"] .sidebar-brand {
@@ -1646,29 +1525,30 @@ body[data-theme="neon"] .sidebar-brand {
 }
 
 body[data-theme="neon"] .sidebar-brand h5 {
-    color: #f8fafc !important;
-    background: linear-gradient(to right, #22d3ee, #c084fc);
+    color: #ffffff !important;
+    background: linear-gradient(to right, #00f0ff, #9d4edd);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 800;
 }
 
 body[data-theme="neon"] .topbar {
-    background: rgba(15, 23, 42, 0.65) !important;
+    background: rgba(10, 15, 30, 0.5) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 body[data-theme="neon"] .topbar-title h4 {
-    color: #f8fafc !important;
-    text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    color: #ffffff !important;
+    text-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
 }
 
 body[data-theme="neon"] .topbar-title p {
     color: #94a3b8 !important;
 }
 
+/* Photorealistic Frosted Glass Cards with Top Light-Rim Specular Highlights */
 body[data-theme="neon"] .stat-card,
 body[data-theme="neon"] .metric-card,
 body[data-theme="neon"] .card,
@@ -1677,12 +1557,14 @@ body[data-theme="neon"] .filter-card,
 body[data-theme="neon"] .settings-panel,
 body[data-theme="neon"] .modal-dialog-custom,
 body[data-theme="neon"] .search-results-dropdown {
-    background: rgba(15, 23, 42, 0.6) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(6, 182, 212, 0.08) !important;
-    border-radius: 16px !important;
+    background: rgba(10, 15, 30, 0.45) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
 }
 
 body[data-theme="neon"] .stat-card:hover,
